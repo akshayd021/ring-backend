@@ -13,7 +13,7 @@ exports.generateInvoice = async (order, filename) => {
     const stream = fs.createWriteStream(filename);
     doc.pipe(stream);
 
-    // ✅ Company Header
+
     doc
       .fontSize(22)
       .text("Your Company Name Pvt Ltd", { align: "center" })
@@ -48,7 +48,6 @@ exports.generateInvoice = async (order, filename) => {
 
     doc.moveDown();
 
-    // ✅ Price Summary
     const taxRate = 0.18; // 18% GST
     const tax = order.subtotal * taxRate;
     const net = order.subtotal + tax + order.shippingCost - order.discount;
