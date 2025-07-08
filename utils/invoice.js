@@ -13,9 +13,8 @@ exports.generateInvoice = async (order, filename) => {
     const stream = fs.createWriteStream(filename);
     doc.pipe(stream);
 
-
     doc
-      .fontSize(22)
+      .fontSize(20)
       .text("Your Company Name Pvt Ltd", { align: "center" })
       .fontSize(12)
       .text("123 Business Street, Tech City, India", { align: "center" })
@@ -34,15 +33,22 @@ exports.generateInvoice = async (order, filename) => {
     doc.text(`Customer: ${userInfo.name}`);
     doc.text(`Email: ${userInfo.email}`);
     doc.text(`Phone: ${userInfo.mobileNumber}`);
-    doc.text(`Address: ${userInfo.address}, ${userInfo.city}, ${userInfo.country} - ${userInfo.pincode}`);
+    doc.text(
+      `Address: ${userInfo.address}, ${userInfo.city}, ${userInfo.country} - ${userInfo.pincode}`
+    );
     doc.moveDown();
 
     // ✅ Product Table
-    doc.font("Helvetica-Bold").text("Items Purchased:", { underline: true }).moveDown();
+    doc
+      .font("Helvetica-Bold")
+      .text("Items Purchased:", { underline: true })
+      .moveDown();
     order.products.forEach((p, i) => {
       const product = p.product;
       const name = product?.name || "Unknown Product";
-      const line = `${i + 1}. ${name} | Qty: ${p.quantity} | Price: ₹${p.price}`;
+      const line = `${i + 1}. ${name} | Qty: ${p.quantity} | Price: ₹${
+        p.price
+      }`;
       doc.font("Helvetica").text(line);
     });
 
