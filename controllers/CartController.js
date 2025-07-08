@@ -1,11 +1,11 @@
-const Cart = require("../models/Cart");
+const Cart = require("../models/cart");
 
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const { productId, quantity, size, variant } = req.body;
 
-    let cart = await Cart.findOne({ userId });
+    let cart = await cart.findOne({ userId });
 
     if (!cart) {
       cart = await Cart.create({
