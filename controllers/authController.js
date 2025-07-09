@@ -39,6 +39,7 @@ exports.register = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "OTP sent to your email for verification",
+      otp,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -300,11 +301,18 @@ exports.updateAddress = async (req, res) => {
     const updatedAddress = req.body;
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
-    const index = user.addresses.findIndex((a) => a._id.toString() === addressId);
+    const index = user.addresses.findIndex(
+      (a) => a._id.toString() === addressId
+    );
     if (index === -1)
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Address not found" });
 
     // If setting default, clear all others first
     if (updatedAddress.isDefault) {
@@ -312,7 +320,10 @@ exports.updateAddress = async (req, res) => {
     }
 
     // Update fields
-    user.addresses[index] = { ...user.addresses[index]._doc, ...updatedAddress };
+    user.addresses[index] = {
+      ...user.addresses[index]._doc,
+      ...updatedAddress,
+    };
     await user.save();
 
     res.status(200).json({
@@ -330,9 +341,14 @@ exports.deleteAddress = async (req, res) => {
     const { addressId } = req.params;
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
-    user.addresses = user.addresses.filter((a) => a._id.toString() !== addressId);
+    user.addresses = user.addresses.filter(
+      (a) => a._id.toString() !== addressId
+    );
     await user.save();
 
     res.status(200).json({
@@ -342,5 +358,45 @@ exports.deleteAddress = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await User.findByIdAndDelete(id);
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    res.json({
+      success: true,
+      message: "User deleted successfully",
+      data: deleted,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteMultipleUsers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "IDs array is required" });
+    }
+
+    const result = await User.deleteMany({ _id: { $in: ids } });
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} user(s) deleted successfully`,
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
