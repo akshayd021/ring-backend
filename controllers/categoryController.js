@@ -54,32 +54,25 @@ exports.getCategoryById = async (req, res) => {
 // ✅ Update Category
 exports.updateCategory = async (req, res) => {
   try {
-    const { name, desc, status } = req.body;
-    const img = req.file?.path;
+    const { name, desc, img, status } = req.body;
+    const category = await Category.findById(req.params.id);
 
-    const updatedData = { name, desc, status };
-    if (img) updatedData.img = img;
-
-    const updated = await Category.findByIdAndUpdate(
-      req.params.id,
-      updatedData,
-      {
-        new: true,
-      }
-    );
-
-    if (!updated)
+    if (!category) {
       return res
         .status(404)
         .json({ status: false, message: "Category not found" });
+    }
 
-    res.status(200).json({
-      status: true,
-      message: "Category updated successfully",
-      data: updated,
-    });
-  } catch (err) {
-    res.status(500).json({ status: false, message: err.message });
+    category.name = name;
+    category.desc = desc;
+    category.status = status;
+    category.img = img || category.img;
+
+    await category.save();
+
+    res.json({ status: true, message: "Category updated", data: category });
+  } catch (error) {
+    res.status(500).json({ status: false, message: "Server error", error });
   }
 };
 
