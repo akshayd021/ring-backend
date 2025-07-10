@@ -340,15 +340,32 @@ exports.deleteAddress = async (req, res) => {
   try {
     const { addressId } = req.params;
 
-    const user = await User.findById(req.user.id);
-    if (!user)
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
+    }
+
+    const addressExists = user.addresses.some(
+      (a) => a._id.toString() === addressId
+    );
+
+    if (!addressExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Address not found for this user",
+      });
+    }
 
     user.addresses = user.addresses.filter(
       (a) => a._id.toString() !== addressId
     );
+
     await user.save();
 
     res.status(200).json({

@@ -3,8 +3,8 @@ const Category = require("../models/Category");
 // ✅ Add Category
 exports.addCategory = async (req, res) => {
   try {
-    const { name, desc, status } = req.body;
-    const img = req.file?.path || "";
+    const { name, desc, status, img } = req.body;
+    // const  = req.file?.path || "";
 
     const category = await Category.create({ name, img, desc, status });
 

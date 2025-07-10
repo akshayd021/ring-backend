@@ -28,7 +28,7 @@ router.post("/reset-password", resetPassword);
 router.post("/change-password", mustLogin, changePassword);
 router.get("/me", mustLogin, getMe);
 router.get("/users", mustLogin, isAdmin, getAllUsers);
-router.delete("/users/delete",mustLogin, isAdmin, deleteMultipleUsers);
+router.delete("/users/delete", mustLogin, isAdmin, deleteMultipleUsers);
 router.delete("/users/:id", mustLogin, isAdmin, deleteUser);
 router.post("/add-address", mustLogin, addAddress);
 router.put("/update-address/:addressId", mustLogin, updateAddress);
