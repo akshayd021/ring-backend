@@ -1,21 +1,31 @@
-const Subcategory = require("../models/Subcategory");
+const Category = require("../models/Category");
 
 exports.addSubcategory = async (req, res) => {
   try {
-    const { name, desc, status, categoryId ,img} = req.body;
+    const { categoryId, name, img, desc, status } = req.body;
 
-    const subcategory = await Subcategory.create({
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        status: false,
+        message: "Category not found",
+      });
+    }
+
+    const newSubcategory = {
       name,
       img,
       desc,
       status,
-      categoryId,
-    });
+    };
+
+    category.subcategories.push(newSubcategory);
+    await category.save();
 
     res.status(201).json({
       status: true,
-      message: "Subcategory created successfully",
-      data: subcategory,
+      message: "Subcategory added successfully",
+      data: category,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -24,14 +34,21 @@ exports.addSubcategory = async (req, res) => {
 
 exports.getAllSubcategories = async (req, res) => {
   try {
-    const subcategories = await Subcategory.find()
-      .populate("categoryId")
-      .sort({ createdAt: -1 });
+    const categories = await Category.find();
+
+    // Flatten all subcategories with category reference
+    const allSubcategories = categories.flatMap((category) =>
+      category.subcategories.map((subcat) => ({
+        ...subcat.toObject(),
+        categoryId: category._id,
+        categoryName: category.name,
+      }))
+    );
 
     res.status(200).json({
       status: true,
       message: "All subcategories fetched successfully",
-      data: subcategories,
+      data: allSubcategories,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -40,19 +57,25 @@ exports.getAllSubcategories = async (req, res) => {
 
 exports.getSubcategoryById = async (req, res) => {
   try {
-    const subcategory = await Subcategory.findById(req.params.id).populate(
-      "categoryId"
-    );
+    const { subcategoryId } = req.params;
 
-    if (!subcategory)
-      return res
-        .status(404)
-        .json({ status: false, message: "Subcategory not found" });
+    const category = await Category.findOne({
+      "subcategories._id": subcategoryId,
+    });
+
+    if (!category) {
+      return res.status(404).json({
+        status: false,
+        message: "Subcategory not found",
+      });
+    }
+
+    const subcategory = category.subcategories.id(subcategoryId);
 
     res.status(200).json({
       status: true,
       message: "Subcategory fetched successfully",
-      data: subcategory,
+      data: { ...subcategory.toObject(), categoryId: category._id },
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -61,28 +84,32 @@ exports.getSubcategoryById = async (req, res) => {
 
 exports.updateSubcategory = async (req, res) => {
   try {
-    const { name, desc, status, categoryId,img } = req.body;
+    const { subcategoryId } = req.params;
+    const { name, img, desc, status } = req.body;
 
-    const updatedData = { name, desc, status, categoryId };
-    if (img) updatedData.img = img;
+    const category = await Category.findOne({
+      "subcategories._id": subcategoryId,
+    });
 
-    const updated = await Subcategory.findByIdAndUpdate(
-      req.params.id,
-      updatedData,
-      {
-        new: true,
-      }
-    );
+    if (!category) {
+      return res.status(404).json({
+        status: false,
+        message: "Subcategory not found",
+      });
+    }
 
-    if (!updated)
-      return res
-        .status(404)
-        .json({ status: false, message: "Subcategory not found" });
+    const subcategory = category.subcategories.id(subcategoryId);
+    subcategory.name = name || subcategory.name;
+    subcategory.img = img || subcategory.img;
+    subcategory.desc = desc || subcategory.desc;
+    subcategory.status = status || subcategory.status;
+
+    await category.save();
 
     res.status(200).json({
       status: true,
       message: "Subcategory updated successfully",
-      data: updated,
+      data: subcategory,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -91,43 +118,73 @@ exports.updateSubcategory = async (req, res) => {
 
 exports.deleteSubcategory = async (req, res) => {
   try {
-    const deleted = await Subcategory.findByIdAndDelete(req.params.id);
-    if (!deleted)
-      return res
-        .status(404)
-        .json({ status: false, message: "Subcategory not found" });
+    const { subcategoryId } = req.params;
+
+    const category = await Category.findOne({
+      "subcategories._id": subcategoryId,
+    });
+
+    if (!category) {
+      return res.status(404).json({
+        status: false,
+        message: "Subcategory not found",
+      });
+    }
+
+    category.subcategories.id(subcategoryId).remove();
+    await category.save();
 
     res.status(200).json({
       status: true,
       message: "Subcategory deleted successfully",
-      data: deleted,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
   }
 };
 
-exports.updateMultipleStatus = async (req, res) => {
+exports.updateMultipleSubcategoryStatus = async (req, res) => {
   try {
     const { ids, status } = req.body;
 
-    await Subcategory.updateMany({ _id: { $in: ids } }, { $set: { status } });
+    const categories = await Category.find({
+      "subcategories._id": { $in: ids },
+    });
+
+    for (const category of categories) {
+      for (const subcat of category.subcategories) {
+        if (ids.includes(subcat._id.toString())) {
+          subcat.status = status;
+        }
+      }
+      await category.save();
+    }
 
     res.status(200).json({
       status: true,
       message: "Subcategory statuses updated successfully",
-      data: { ids, status },
+      data: ids,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
   }
 };
 
+// ✅ Delete Multiple Subcategories
 exports.deleteMultipleSubcategories = async (req, res) => {
   try {
     const { ids } = req.body;
 
-    await Subcategory.deleteMany({ _id: { $in: ids } });
+    const categories = await Category.find({
+      "subcategories._id": { $in: ids },
+    });
+
+    for (const category of categories) {
+      category.subcategories = category.subcategories.filter(
+        (subcat) => !ids.includes(subcat._id.toString())
+      );
+      await category.save();
+    }
 
     res.status(200).json({
       status: true,

@@ -7,7 +7,7 @@ const {
   getSubcategoryById,
   updateSubcategory,
   deleteSubcategory,
-  updateMultipleStatus,
+  updateMultipleSubcategoryStatus,
   deleteMultipleSubcategories,
 } = require("../controllers/subcategoryController");
 
@@ -18,7 +18,12 @@ router.get("/", mustLogin, isAdmin, getAllSubcategories);
 router.get("/:id", mustLogin, isAdmin, getSubcategoryById);
 router.put("/:id", mustLogin, isAdmin, updateSubcategory);
 router.delete("/:id", mustLogin, isAdmin, deleteSubcategory);
-router.put("/update/status/many", mustLogin, isAdmin, updateMultipleStatus);
+router.put(
+  "/update/status/many",
+  mustLogin,
+  isAdmin,
+  updateMultipleSubcategoryStatus
+);
 router.post("/delete/many", mustLogin, isAdmin, deleteMultipleSubcategories);
 
 module.exports = router;

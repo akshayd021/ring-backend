@@ -9,6 +9,7 @@ exports.addProduct = async (req, res) => {
       sku,
       category,
       subcategory,
+      img,
       size,
       variant,
       desc1,
@@ -22,13 +23,12 @@ exports.addProduct = async (req, res) => {
       discount,
       stock,
       store,
-      img
+      bestseller,
     } = req.body;
 
-    
-    const generatedSlug = slug
-      ? slugify(slug, { lower: true })
-      : slugify(name, { lower: true });
+    // Optional: auto calculate discount if not provided
+    const finalDiscount =
+      discount || Math.round(((originalPrice - price) / originalPrice) * 100);
 
     const product = await Product.create({
       name,
@@ -43,13 +43,13 @@ exports.addProduct = async (req, res) => {
       desc3,
       status,
       tag,
-      slug: generatedSlug,
+      slug,
       price,
       originalPrice,
-      discount:
-        discount || Math.round(((originalPrice - price) / originalPrice) * 100),
+      discount: finalDiscount,
       stock,
       store,
+      bestseller,
     });
 
     res.status(201).json({
