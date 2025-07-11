@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const Order = require("../models/Order");
 const slugify = require("slugify");
 
 exports.addProduct = async (req, res) => {
@@ -21,9 +22,10 @@ exports.addProduct = async (req, res) => {
       discount,
       stock,
       store,
+      img
     } = req.body;
 
-    const images = req.files?.map((file) => file.path) || [];
+    
     const generatedSlug = slug
       ? slugify(slug, { lower: true })
       : slugify(name, { lower: true });
@@ -33,7 +35,7 @@ exports.addProduct = async (req, res) => {
       sku,
       category,
       subcategory,
-      img: images,
+      img,
       size,
       variant,
       desc1,
@@ -114,10 +116,11 @@ exports.updateProduct = async (req, res) => {
       originalPrice,
       discount,
       stock,
+      img,
       store,
     } = req.body;
 
-    const images = req.files?.map((file) => file.path);
+
     const updatedData = {
       name,
       sku,
@@ -140,7 +143,7 @@ exports.updateProduct = async (req, res) => {
         ? slugify(slug, { lower: true })
         : slugify(name, { lower: true }),
     };
-    if (images?.length) updatedData.img = images;
+    if (img?.length) updatedData.img = images;
 
     const updated = await Product.findByIdAndUpdate(
       req.params.id,

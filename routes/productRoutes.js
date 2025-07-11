@@ -15,12 +15,12 @@ const {
   deleteMultipleProducts,
 } = require("../controllers/productController");
 
-router.post("/", mustLogin, isAdmin, upload.array("img", 5), addProduct);
+router.post("/", mustLogin, isAdmin, addProduct);
 router.get("/", mustLogin, isAdmin, getAllProducts);
 router.get("/store", getProductsInStore);
 router.get("/active", getActiveProducts);
 router.get("/:id", mustLogin, isAdmin, getProductById);
-router.put("/:id", mustLogin, isAdmin, upload.array("img", 5), updateProduct);
+router.put("/:id", mustLogin, isAdmin,  updateProduct);
 router.delete("/:id", mustLogin, isAdmin, deleteProduct);
 router.get("/slug/:slug", getProductBySlug);
 

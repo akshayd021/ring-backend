@@ -2,8 +2,7 @@ const Subcategory = require("../models/Subcategory");
 
 exports.addSubcategory = async (req, res) => {
   try {
-    const { name, desc, status, categoryId } = req.body;
-    const img = req.file?.path || "";
+    const { name, desc, status, categoryId ,img} = req.body;
 
     const subcategory = await Subcategory.create({
       name,
@@ -62,8 +61,7 @@ exports.getSubcategoryById = async (req, res) => {
 
 exports.updateSubcategory = async (req, res) => {
   try {
-    const { name, desc, status, categoryId } = req.body;
-    const img = req.file?.path;
+    const { name, desc, status, categoryId,img } = req.body;
 
     const updatedData = { name, desc, status, categoryId };
     if (img) updatedData.img = img;
