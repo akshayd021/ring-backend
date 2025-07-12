@@ -138,7 +138,6 @@ exports.updateSubcategory = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
-
 exports.deleteSubcategory = async (req, res) => {
   try {
     const { subcategoryId } = req.params;
@@ -154,7 +153,11 @@ exports.deleteSubcategory = async (req, res) => {
       });
     }
 
-    category.subcategories.id(subcategoryId).remove();
+    // Remove subcategory manually
+    category.subcategories = category.subcategories.filter(
+      (sub) => sub._id.toString() !== subcategoryId
+    );
+
     await category.save();
 
     res.status(200).json({
@@ -164,7 +167,7 @@ exports.deleteSubcategory = async (req, res) => {
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
   }
-};
+}
 
 exports.updateMultipleSubcategoryStatus = async (req, res) => {
   try {
