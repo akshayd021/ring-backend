@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Category = require("../models/Category");
 
 exports.addSubcategory = async (req, res) => {
@@ -57,28 +58,50 @@ exports.getAllSubcategories = async (req, res) => {
 
 exports.getSubcategoryById = async (req, res) => {
   try {
-    const { subcategoryId } = req.params;
+    const { subCatID } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(subCatID)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid subcategory ID",
+      });
+    }
 
     const category = await Category.findOne({
-      "subcategories._id": subcategoryId,
+      "subcategories._id": subCatID,
     });
 
     if (!category) {
+      return res.status(404).json({
+        status: false,
+        message: "Subcategory not found in any category",
+      });
+    }
+
+    const subcategory = category.subcategories.find(
+      (sub) => sub._id.toString() === subCatID
+    );
+    if (!subcategory) {
       return res.status(404).json({
         status: false,
         message: "Subcategory not found",
       });
     }
 
-    const subcategory = category.subcategories.id(subcategoryId);
-
     res.status(200).json({
       status: true,
       message: "Subcategory fetched successfully",
-      data: { ...subcategory.toObject(), categoryId: category._id },
+      data: {
+        ...subcategory.toObject(),
+        categoryId: category._id,
+        categoryName: category.name,
+      },
     });
   } catch (err) {
-    res.status(500).json({ status: false, message: err.message });
+    res.status(500).json({
+      status: false,
+      message: err.message,
+    });
   }
 };
 
@@ -86,8 +109,7 @@ exports.updateSubcategory = async (req, res) => {
   try {
     const { subcategoryId } = req.params;
     const { name, img, desc, status } = req.body;
-
-    const category = await Category.findOne({
+     const category = await Category.findOne({
       "subcategories._id": subcategoryId,
     });
 
@@ -97,6 +119,7 @@ exports.updateSubcategory = async (req, res) => {
         message: "Subcategory not found",
       });
     }
+
 
     const subcategory = category.subcategories.id(subcategoryId);
     subcategory.name = name || subcategory.name;

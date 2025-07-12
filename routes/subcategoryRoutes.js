@@ -15,9 +15,9 @@ const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
 
 router.post("/", mustLogin, isAdmin, addSubcategory);
 router.get("/", mustLogin, isAdmin, getAllSubcategories);
-router.get("/:id", mustLogin, isAdmin, getSubcategoryById);
-router.put("/:id", mustLogin, isAdmin, updateSubcategory);
-router.delete("/:id", mustLogin, isAdmin, deleteSubcategory);
+router.get("/:subCatID", mustLogin, isAdmin, getSubcategoryById);
+router.put("/:subcategoryId", mustLogin, isAdmin, updateSubcategory);
+router.delete("/:subcategoryId", mustLogin, isAdmin, deleteSubcategory);
 router.put(
   "/update/status/many",
   mustLogin,
