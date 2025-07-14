@@ -15,7 +15,7 @@ exports.createContactSection = async (req, res) => {
 // 📥 Get latest (frontend use)
 exports.getContactSection = async (req, res) => {
   try {
-    const data = await ContactSection.findOne({ status: "active" }).sort({
+    const data = await ContactSection.find().sort({
       createdAt: -1,
     });
     res

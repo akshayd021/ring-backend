@@ -12,6 +12,8 @@ const CusomizeRoutes = require("./routes/customDesignRoutes");
 const ContactRoutes = require("./routes/contactSectionRoutes");
 const CustomeDesignReqRoutes = require("./routes/customDesignRequestRoutes");
 const CartRoutes = require("./routes/cartRoutes");
+const VariantRoutes = require("./routes/variantRoutes");
+
 const PORT = process.env.PORT || 5001;
 dotenv.config();
 const app = express();
@@ -48,7 +50,7 @@ app.use("/api/customize", CusomizeRoutes);
 app.use("/api/cotact-section", ContactRoutes);
 app.use("/api/custom-design-req", CustomeDesignReqRoutes);
 app.use("/api/cart", CartRoutes);
-
+app.use("/api/variant", VariantRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

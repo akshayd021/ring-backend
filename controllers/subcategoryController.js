@@ -37,7 +37,6 @@ exports.getAllSubcategories = async (req, res) => {
   try {
     const categories = await Category.find();
 
-    // Flatten all subcategories with category reference
     const allSubcategories = categories.flatMap((category) =>
       category.subcategories.map((subcat) => ({
         ...subcat.toObject(),
@@ -109,7 +108,7 @@ exports.updateSubcategory = async (req, res) => {
   try {
     const { subcategoryId } = req.params;
     const { name, img, desc, status } = req.body;
-     const category = await Category.findOne({
+    const category = await Category.findOne({
       "subcategories._id": subcategoryId,
     });
 
@@ -119,7 +118,6 @@ exports.updateSubcategory = async (req, res) => {
         message: "Subcategory not found",
       });
     }
-
 
     const subcategory = category.subcategories.id(subcategoryId);
     subcategory.name = name || subcategory.name;
@@ -167,7 +165,7 @@ exports.deleteSubcategory = async (req, res) => {
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
   }
-}
+};
 
 exports.updateMultipleSubcategoryStatus = async (req, res) => {
   try {
