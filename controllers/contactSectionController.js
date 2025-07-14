@@ -12,7 +12,6 @@ exports.createContactSection = async (req, res) => {
   }
 };
 
-// 📥 Get latest (frontend use)
 exports.getContactSection = async (req, res) => {
   try {
     const data = await ContactSection.find().sort({
