@@ -2,7 +2,10 @@ const mongoose = require("mongoose");
 
 const subcategorySchema = new mongoose.Schema(
   {
-    _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+    _id: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: () => new mongoose.Types.ObjectId(),
+    },
     name: { type: String, required: true },
     img: { type: String },
     desc: { type: String },
@@ -10,7 +13,6 @@ const subcategorySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 
 const categorySchema = new mongoose.Schema(
   {

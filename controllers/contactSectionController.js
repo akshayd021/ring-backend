@@ -1,12 +1,21 @@
 const ContactSection = require("../models/ContactSection");
 
-// ➕ Add or create contact section (only one allowed ideally)
 exports.createContactSection = async (req, res) => {
   try {
+    if (req.body.status === "active") {
+      await ContactSection.updateMany(
+        { status: "active" },
+        { $set: { status: "inactive" } }
+      );
+    }
+
     const data = await ContactSection.create(req.body);
-    res
-      .status(201)
-      .json({ status: true, message: "Contact section created", data });
+
+    res.status(201).json({
+      status: true,
+      message: "Contact section created",
+      data,
+    });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
   }
@@ -25,21 +34,26 @@ exports.getContactSection = async (req, res) => {
   }
 };
 
-// ✏️ Update by ID
 exports.updateContactSection = async (req, res) => {
   try {
+    if (req.body.status === "active") {
+      await ContactSection.updateMany(
+        { _id: { $ne: req.params.id }, status: "active" },
+        { $set: { status: "inactive" } }
+      );
+    }
+
     const updated = await ContactSection.findByIdAndUpdate(
       req.params.id,
       req.body,
-      {
-        new: true,
-      }
+      { new: true }
     );
 
     if (!updated) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Contact section not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Contact section not found",
+      });
     }
 
     res.status(200).json({
@@ -52,7 +66,6 @@ exports.updateContactSection = async (req, res) => {
   }
 };
 
-// ❌ Delete
 exports.deleteContactSection = async (req, res) => {
   try {
     await ContactSection.findByIdAndDelete(req.params.id);

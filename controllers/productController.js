@@ -26,7 +26,6 @@ exports.addProduct = async (req, res) => {
       bestseller,
     } = req.body;
 
-    // Optional: auto calculate discount if not provided
     const finalDiscount =
       discount || Math.round(((originalPrice - price) / originalPrice) * 100);
 
@@ -65,7 +64,7 @@ exports.addProduct = async (req, res) => {
 exports.getAllProducts = async (req, res) => {
   try {
     const products = await Product.find()
-      .populate("category subcategory")
+      .populate("category subcategory variant")
       .sort({ createdAt: -1 });
     res.status(200).json({
       status: true,
@@ -79,18 +78,30 @@ exports.getAllProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate(
-      "category subcategory"
-    );
+    const product = await Product.findById(req.params.id)
+      .populate("category")
+      .populate("variant");
+
     if (!product)
       return res
         .status(404)
         .json({ status: false, message: "Product not found" });
 
+    const matchedSubcategory =
+      product?.subcategory?.toString() === product.subcategory.toString()
+        ? product.subcategory
+        : product.category.subcategories.find(
+            (sub) => sub._id.toString() === product.subcategory.toString()
+          );
+    console.log(matchedSubcategory, "matchedSubcategory");
+
+    const productObj = product.toObject();
+    productObj.subcategory = matchedSubcategory || "Not found";
+
     res.status(200).json({
       status: true,
       message: "Product fetched successfully",
-      data: product,
+      data: productObj,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -119,7 +130,6 @@ exports.updateProduct = async (req, res) => {
       img,
       store,
     } = req.body;
-
 
     const updatedData = {
       name,
@@ -209,7 +219,7 @@ exports.getProductsInStore = async (req, res) => {
     const products = await Product.find({
       store: true,
       status: "active",
-    }).populate("category subcategory");
+    }).populate("category subcategory variant");
     res.status(200).json({
       status: true,
       message: "Store products fetched successfully",
@@ -223,7 +233,7 @@ exports.getProductsInStore = async (req, res) => {
 exports.getActiveProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: "active" }).populate(
-      "category subcategory"
+      "category subcategory variant"
     );
     res.status(200).json({
       status: true,
@@ -284,12 +294,10 @@ exports.cancelOrder = async (req, res) => {
     }
 
     if (order.status === "cancel" || order.status === "delivered") {
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: `Cannot cancel an already ${order.status} order`,
-        });
+      return res.status(400).json({
+        status: false,
+        message: `Cannot cancel an already ${order.status} order`,
+      });
     }
 
     order.status = "cancel";
