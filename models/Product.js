@@ -10,13 +10,13 @@ const productSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
-    subcategory: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-    },
+    // subcategory: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   required: true,
+    // },
 
     img: [{ type: String }],
-    size: [{ type: String }],
+    // size: [{ type: String }],
     variant: [
       {
         type: mongoose.Schema.Types.ObjectId,

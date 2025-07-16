@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const upload = require("../middlewares/upload");
 const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
 const {
   addProduct,
@@ -19,10 +18,10 @@ router.post("/", mustLogin, isAdmin, addProduct);
 router.get("/", mustLogin, isAdmin, getAllProducts);
 router.get("/store", getProductsInStore);
 router.get("/active", getActiveProducts);
-router.get("/:id", mustLogin, isAdmin, getProductById);
-router.put("/:id", mustLogin, isAdmin,  updateProduct);
-router.delete("/:id", mustLogin, isAdmin, deleteProduct);
 router.get("/slug/:slug", getProductBySlug);
+router.get("/:id", mustLogin, isAdmin, getProductById);
+router.put("/:id", mustLogin, isAdmin, updateProduct);
+router.delete("/:id", mustLogin, isAdmin, deleteProduct);
 
 router.put(
   "/update/status/many",

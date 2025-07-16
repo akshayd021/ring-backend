@@ -17,6 +17,13 @@ const variantSchema = new mongoose.Schema({
   variants: [
     {
       value: { type: String, required: true },
+      img: { type: String },
+      combination: { type: String },
+      sku: { type: String },
+      barcode: { type: String },
+      price: { type: Number },
+      salePrice: { type: Number },
+      quantity: { type: Number, default: 0 },
       status: { type: String, enum: ["show", "hide"], default: "show" },
     },
   ],

@@ -8,7 +8,6 @@ exports.addProduct = async (req, res) => {
       name,
       sku,
       category,
-      subcategory,
       img,
       size,
       variant,
@@ -33,7 +32,6 @@ exports.addProduct = async (req, res) => {
       name,
       sku,
       category,
-      subcategory,
       img,
       size,
       variant,
@@ -64,7 +62,7 @@ exports.addProduct = async (req, res) => {
 exports.getAllProducts = async (req, res) => {
   try {
     const products = await Product.find()
-      .populate("category subcategory variant")
+      .populate("category  variant")
       .sort({ createdAt: -1 });
     res.status(200).json({
       status: true,
@@ -78,30 +76,18 @@ exports.getAllProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
-      .populate("category")
-      .populate("variant");
-
+    const product = await Product.findById(req.params.id).populate(
+      "category variant"
+    );
     if (!product)
       return res
         .status(404)
         .json({ status: false, message: "Product not found" });
 
-    const matchedSubcategory =
-      product?.subcategory?.toString() === product.subcategory.toString()
-        ? product.subcategory
-        : product.category.subcategories.find(
-            (sub) => sub._id.toString() === product.subcategory.toString()
-          );
-    console.log(matchedSubcategory, "matchedSubcategory");
-
-    const productObj = product.toObject();
-    productObj.subcategory = matchedSubcategory || "Not found";
-
     res.status(200).json({
       status: true,
       message: "Product fetched successfully",
-      data: productObj,
+      data: product,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -114,7 +100,6 @@ exports.updateProduct = async (req, res) => {
       name,
       sku,
       category,
-      subcategory,
       size,
       variant,
       desc1,
@@ -135,7 +120,6 @@ exports.updateProduct = async (req, res) => {
       name,
       sku,
       category,
-      subcategory,
       size,
       variant,
       desc1,
@@ -197,7 +181,7 @@ exports.deleteProduct = async (req, res) => {
 exports.getProductBySlug = async (req, res) => {
   try {
     const product = await Product.findOne({ slug: req.params.slug }).populate(
-      "category subcategory"
+      "category variant"
     );
     if (!product)
       return res
@@ -219,7 +203,7 @@ exports.getProductsInStore = async (req, res) => {
     const products = await Product.find({
       store: true,
       status: "active",
-    }).populate("category subcategory variant");
+    }).populate("category  variant");
     res.status(200).json({
       status: true,
       message: "Store products fetched successfully",
@@ -233,7 +217,7 @@ exports.getProductsInStore = async (req, res) => {
 exports.getActiveProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: "active" }).populate(
-      "category subcategory variant"
+      "category  variant"
     );
     res.status(200).json({
       status: true,
