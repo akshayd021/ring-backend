@@ -9,6 +9,8 @@ const {
   addVariantValue,
   updateVariantValue,
   deleteVariantValue,
+  deleteMultipleVariants,
+  deleteVariantValues,
 } = require("../controllers/variantController");
 const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
 
@@ -17,9 +19,11 @@ router.get("/", getAllVariants); // Read all
 router.get("/:id", getVariantById); // Read one
 router.put("/:id", mustLogin, isAdmin, updateVariant); // Update
 router.delete("/:id", mustLogin, isAdmin, deleteVariant); // Delete
+router.post("/delete-multiple",mustLogin, isAdmin, deleteMultipleVariants);
 
 router.post("/:id/value", addVariantValue);
 router.put("/value/:variantValueId", updateVariantValue);
 router.delete("/value/:variantValueId", deleteVariantValue);
+router.post("/delete-values", deleteVariantValues);
 
 module.exports = router;

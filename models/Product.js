@@ -6,23 +6,24 @@ const productSchema = new mongoose.Schema(
     sku: { type: String, required: true, unique: true },
 
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+      },
+      subcategories: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Subcategory",
+        },
+      ],
     },
-    // subcategory: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   required: true,
-    // },
-
     img: [{ type: String }],
     // size: [{ type: String }],
-    variant: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Variant",
-      },
-    ],
+    variant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Variant",
+    },
 
     desc1: { type: String },
     desc2: { type: String },

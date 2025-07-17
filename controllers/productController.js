@@ -76,13 +76,19 @@ exports.getAllProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate(
-      "category variant"
-    );
-    if (!product)
-      return res
-        .status(404)
-        .json({ status: false, message: "Product not found" });
+    const Subcategory = require("../models/Subcategory");
+
+    const product = await Product.findById(req.params.id)
+      .populate("category._id")
+      .populate("category.subcategories")
+      .populate("variant");
+
+    if (!product) {
+      return res.status(404).json({
+        status: false,
+        message: "Product not found",
+      });
+    }
 
     res.status(200).json({
       status: true,
@@ -93,7 +99,6 @@ exports.getProductById = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
-
 exports.updateProduct = async (req, res) => {
   try {
     const {
@@ -130,6 +135,7 @@ exports.updateProduct = async (req, res) => {
       price,
       originalPrice,
       stock,
+      img,
       store,
       discount:
         discount || Math.round(((originalPrice - price) / originalPrice) * 100),
@@ -137,7 +143,6 @@ exports.updateProduct = async (req, res) => {
         ? slugify(slug, { lower: true })
         : slugify(name, { lower: true }),
     };
-    if (img?.length) updatedData.img = images;
 
     const updated = await Product.findByIdAndUpdate(
       req.params.id,

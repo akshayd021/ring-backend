@@ -197,3 +197,61 @@ exports.deleteVariantValue = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
+
+exports.deleteMultipleVariants = async (req, res) => {
+  try {
+    const { variantIds } = req.body;
+
+    if (!Array.isArray(variantIds) || variantIds.length === 0) {
+      return res
+        .status(400)
+        .json({ status: false, message: "No variant IDs provided" });
+    }
+
+    const result = await Variant.deleteMany({ _id: { $in: variantIds } });
+
+    res.json({
+      status: true,
+      message: `${result.deletedCount} variant(s) deleted successfully`,
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+exports.deleteVariantValues = async (req, res) => {
+  try {
+    const { variantId, valueIdsToDelete } = req.body; // Array of `_id`s inside variants array
+
+    console.log("Deleting variant values:", valueIdsToDelete);
+    if (
+      !variantId ||
+      !Array.isArray(valueIdsToDelete) ||
+      valueIdsToDelete.length === 0
+    ) {
+      return res.status(400).json({ status: false, message: "Invalid input" });
+    }
+
+    const variant = await Variant.findById(variantId);
+    if (!variant) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Variant not found" });
+    }
+
+    // Filter out variant values with matching _id
+    variant.variants = variant.variants.filter(
+      (v) => !valueIdsToDelete.includes(v._id.toString())
+    );
+
+    await variant.save();
+
+    res.json({
+      status: true,
+      message: "Variant values deleted successfully",
+      data: variant,
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
