@@ -29,12 +29,12 @@ exports.generateInvoice = async (order, filename) => {
     doc.moveDown();
 
     // ✅ Customer Info
-    const { userInfo } = order;
-    doc.text(`Customer: ${userInfo.name}`);
-    doc.text(`Email: ${userInfo.email}`);
-    doc.text(`Phone: ${userInfo.mobileNumber}`);
+    const { userId } = order;
+    doc.text(`Customer: ${userId.firstname} ${userId.lastname}`);
+    doc.text(`Email: ${userId.email}`);
+    doc.text(`Phone: ${userId.mobileNumber}`);
     doc.text(
-      `Address: ${userInfo.address}, ${userInfo.city}, ${userInfo.country} - ${userInfo.pincode}`
+      `Address: ${userId.address}, ${userId.city}, ${userId.country} - ${userId.pincode}`
     );
     doc.moveDown();
 

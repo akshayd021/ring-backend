@@ -9,7 +9,6 @@ exports.createOrder = async (req, res) => {
     const {
       userId,
       products,
-      userInfo,
       subtotal,
       shippingCost,
       discount,
@@ -21,7 +20,6 @@ exports.createOrder = async (req, res) => {
     const order = await Order.create({
       userId,
       products,
-      userInfo,
       subtotal,
       shippingCost,
       discount,
@@ -31,21 +29,27 @@ exports.createOrder = async (req, res) => {
     });
 
     const populatedOrder = await Order.findById(order._id).populate(
-      "products.product"
+      "products.product userId"
     );
+
 
     const filename = `invoices/invoice_${order._id}.pdf`;
     await generateInvoice(populatedOrder, filename);
 
-    await sendEmail(
-      populatedOrder.userInfo.email,
-      "Your Order Invoice",
-      "Thank you for your order. Please find your invoice attached.",
-      filename
-    );
+    if (populatedOrder?.userId?.email) {
+      await sendEmail(
+        populatedOrder.userId.email,
+        "Your Order Invoice",
+        `Thank you ${
+          populatedOrder.userId.name || "Customer"
+        }, please find your invoice attached.`,
+        filename
+      );
+    }
 
     fs.unlinkSync(path.resolve(filename));
 
+    
     res.status(201).json({
       status: true,
       message: "Order placed and invoice emailed successfully",
@@ -149,9 +153,13 @@ exports.deleteOrder = async (req, res) => {
   try {
     const order = await Order.findByIdAndDelete(req.params.id);
     if (!order) {
-      return res.status(404).json({ status: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Order not found" });
     }
-    res.status(200).json({ status: true, message: "Order deleted successfully" });
+    res
+      .status(200)
+      .json({ status: true, message: "Order deleted successfully" });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
   }
@@ -162,7 +170,9 @@ exports.deleteMultipleOrders = async (req, res) => {
     const { orderIds } = req.body;
 
     if (!Array.isArray(orderIds) || orderIds.length === 0) {
-      return res.status(400).json({ status: false, message: "No order IDs provided" });
+      return res
+        .status(400)
+        .json({ status: false, message: "No order IDs provided" });
     }
 
     const result = await Order.deleteMany({ _id: { $in: orderIds } });
