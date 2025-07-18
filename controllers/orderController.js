@@ -144,3 +144,34 @@ exports.getOrdersByStatus = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findByIdAndDelete(req.params.id);
+    if (!order) {
+      return res.status(404).json({ status: false, message: "Order not found" });
+    }
+    res.status(200).json({ status: true, message: "Order deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+exports.deleteMultipleOrders = async (req, res) => {
+  try {
+    const { orderIds } = req.body;
+
+    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ status: false, message: "No order IDs provided" });
+    }
+
+    const result = await Order.deleteMany({ _id: { $in: orderIds } });
+
+    res.status(200).json({
+      status: true,
+      message: `${result.deletedCount} orders deleted successfully`,
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};

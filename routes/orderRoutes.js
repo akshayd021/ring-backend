@@ -7,6 +7,8 @@ const {
   getOrdersByUser,
   updateOrderStatus,
   getOrdersByStatus,
+  deleteOrder,
+  deleteMultipleOrders,
 } = require("../controllers/orderController");
 const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
 const { cancelOrder } = require("../controllers/productController");
@@ -18,5 +20,7 @@ router.get("/user/:userId", mustLogin, getOrdersByUser);
 router.put("/:id/status", mustLogin, isAdmin, updateOrderStatus);
 router.put("/:id/cancel", mustLogin, cancelOrder);
 router.get("/status/:status", mustLogin, isAdmin, getOrdersByStatus);
+router.delete("/:id", mustLogin, isAdmin, deleteOrder);
+router.post("/delete-multiple", mustLogin, isAdmin, deleteMultipleOrders);
 
 module.exports = router;
