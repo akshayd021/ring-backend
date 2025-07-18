@@ -23,6 +23,7 @@ const productSchema = new mongoose.Schema(
     variant: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Variant",
+      required: false,
     },
 
     desc1: { type: String },
