@@ -3,6 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const { generateInvoice } = require("../utils/invoice");
 const sendEmail = require("../utils/sendEmail");
+const Subcategory = require("../models/Subcategory");
+const Product = require("../models/Product");
 
 exports.createOrder = async (req, res) => {
   try {
@@ -32,7 +34,6 @@ exports.createOrder = async (req, res) => {
       "products.product userId"
     );
 
-
     const filename = `invoices/invoice_${order._id}.pdf`;
     await generateInvoice(populatedOrder, filename);
 
@@ -49,7 +50,6 @@ exports.createOrder = async (req, res) => {
 
     fs.unlinkSync(path.resolve(filename));
 
-    
     res.status(201).json({
       status: true,
       message: "Order placed and invoice emailed successfully",
@@ -62,7 +62,24 @@ exports.createOrder = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate("userId products.product");
+    const orders = await Order.find().populate("userId")
+      .populate({
+        path: "products.product",
+        populate: [
+          {
+            path: "category._id",
+            model: "Category",
+          },
+          {
+            path: "category.subcategories",
+            model: "Subcategory",
+          },
+          {
+            path: "variant",
+          },
+        ],
+      });
+
     res.status(200).json({
       status: true,
       message: "All orders fetched successfully",
@@ -75,9 +92,25 @@ exports.getAllOrders = async (req, res) => {
 
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate(
-      "userId products.product"
-    );
+    const order = await Order.findById(req.params.id)
+      .populate("userId")
+      .populate({
+        path: "products.product",
+        populate: [
+          {
+            path: "category._id",
+            model: "Category",
+          },
+          {
+            path: "category.subcategories",
+            model: "Subcategory",
+          },
+          {
+            path: "variant",
+          },
+        ],
+      });
+
     if (!order)
       return res
         .status(404)
@@ -95,9 +128,24 @@ exports.getOrderById = async (req, res) => {
 
 exports.getOrdersByUser = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.params.userId }).populate(
-      "products.product"
-    );
+    const orders = await Order.find({ userId: req.params.userId }).populate("userId")
+      .populate({
+        path: "products.product",
+        populate: [
+          {
+            path: "category._id",
+            model: "Category",
+          },
+          {
+            path: "category.subcategories",
+            model: "Subcategory",
+          },
+          {
+            path: "variant",
+          },
+        ],
+      });
+
     res.status(200).json({
       status: true,
       message: "User orders fetched successfully",
@@ -136,9 +184,24 @@ exports.updateOrderStatus = async (req, res) => {
 exports.getOrdersByStatus = async (req, res) => {
   try {
     const status = req.params.status;
-    const orders = await Order.find({ status }).populate(
-      "userId products.product"
-    );
+    const orders = await Order.find({ status }).populate("userId")
+      .populate({
+        path: "products.product",
+        populate: [
+          {
+            path: "category._id",
+            model: "Category",
+          },
+          {
+            path: "category.subcategories",
+            model: "Subcategory",
+          },
+          {
+            path: "variant",
+          },
+        ],
+      });
+
     res.status(200).json({
       status: true,
       message: `${status} orders fetched successfully`,

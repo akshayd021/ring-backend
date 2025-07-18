@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["user", "admin"], default: "user" },
     otp: { type: String },
     isVerified: { type: Boolean, default: false },
-    mobileNumber: { type: String, required: true },
+    mobileNumber: { type: String, required: false },
     profilePicture: { type: String, default: "" },
 
     addresses: [
