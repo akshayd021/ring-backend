@@ -20,11 +20,12 @@ const productSchema = new mongoose.Schema(
     },
     img: [{ type: String }],
     // size: [{ type: String }],
-    variant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Variant",
-      required: false,
-    },
+  variant: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Variant",
+  }
+],
 
     desc1: { type: String },
     desc2: { type: String },

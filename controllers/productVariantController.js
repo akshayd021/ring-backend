@@ -21,7 +21,9 @@ exports.linkTempVariantsToProduct = async (req, res) => {
     const { tempId, productId } = req.body;
 
     if (!tempId || !productId) {
-      return res.status(400).json({ status: false, message: "Missing tempId or productId" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Missing tempId or productId" });
     }
 
     const result = await ProductVariant.updateMany(
@@ -55,12 +57,18 @@ exports.getVariantsByProductId = async (req, res) => {
 
 exports.updateProductVariant = async (req, res) => {
   try {
-    const variant = await ProductVariant.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const variant = await ProductVariant.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
 
     if (!variant) {
-      return res.status(404).json({ status: false, message: "Variant not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Variant not found" });
     }
 
     res.json({
@@ -78,7 +86,9 @@ exports.deleteProductVariant = async (req, res) => {
     const variant = await ProductVariant.findByIdAndDelete(req.params.id);
 
     if (!variant) {
-      return res.status(404).json({ status: false, message: "Variant not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Variant not found" });
     }
 
     res.json({
