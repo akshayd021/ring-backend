@@ -20,7 +20,15 @@ const productVariantSchema = new mongoose.Schema(
     discount: { type: Number },
     sku: { type: String },
     barcode: { type: String },
-    image: { type: String },
+    image: {
+      type: [String], // This allows multiple URLs
+      validate: {
+        validator: function (arr) {
+          return arr.every(url => typeof url === "string");
+        },
+        message: "All images must be URLs in string format.",
+      },
+    },
   },
   { timestamps: true }
 );
