@@ -74,9 +74,6 @@ exports.getAllOrders = async (req, res) => {
             path: "category.subcategories",
             model: "Subcategory",
           },
-          {
-            path: "variant",
-          },
         ],
       });
 
@@ -104,9 +101,6 @@ exports.getOrderById = async (req, res) => {
           {
             path: "category.subcategories",
             model: "Subcategory",
-          },
-          {
-            path: "variant",
           },
         ],
       });
@@ -140,9 +134,7 @@ exports.getOrdersByUser = async (req, res) => {
             path: "category.subcategories",
             model: "Subcategory",
           },
-          {
-            path: "variant",
-          },
+         
         ],
       });
 
@@ -196,9 +188,7 @@ exports.getOrdersByStatus = async (req, res) => {
             path: "category.subcategories",
             model: "Subcategory",
           },
-          {
-            path: "variant",
-          },
+         
         ],
       });
 
