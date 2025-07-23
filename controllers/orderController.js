@@ -62,7 +62,8 @@ exports.createOrder = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate("userId")
+    const orders = await Order.find()
+      .populate("userId")
       .populate({
         path: "products.product",
         populate: [
@@ -122,7 +123,8 @@ exports.getOrderById = async (req, res) => {
 
 exports.getOrdersByUser = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.params.userId }).populate("userId")
+    const orders = await Order.find({ userId: req.params.userId })
+      .populate("userId")
       .populate({
         path: "products.product",
         populate: [
@@ -134,7 +136,6 @@ exports.getOrdersByUser = async (req, res) => {
             path: "category.subcategories",
             model: "Subcategory",
           },
-         
         ],
       });
 
@@ -176,7 +177,8 @@ exports.updateOrderStatus = async (req, res) => {
 exports.getOrdersByStatus = async (req, res) => {
   try {
     const status = req.params.status;
-    const orders = await Order.find({ status }).populate("userId")
+    const orders = await Order.find({ status })
+      .populate("userId")
       .populate({
         path: "products.product",
         populate: [
@@ -188,7 +190,6 @@ exports.getOrdersByStatus = async (req, res) => {
             path: "category.subcategories",
             model: "Subcategory",
           },
-         
         ],
       });
 

@@ -11,7 +11,7 @@ const VariantSchema = new mongoose.Schema(
     sku: String,
     barcode: String,
     quantity: Number,
-    img: String,
+    img: [{ type: String }],
   },
   { _id: false }
 );
@@ -22,35 +22,18 @@ const productSchema = new mongoose.Schema(
     sku: { type: String, required: true, unique: true },
 
     category: {
-      _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category",
-        required: true,
-      },
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
       subcategories: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Subcategory",
-        },
+        { type: mongoose.Schema.Types.ObjectId, ref: "Subcategory" },
       ],
     },
     img: [{ type: String }],
-    // size: [{ type: String }],
-    // att: {
-    //   id1: ["sub1", "sub2"],
-    //   id2: ["sub3", "sub4"],
-    // },
+
     att: {
       type: Map,
       of: [String],
       default: {},
     },
-    // variant: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "Variant",
-    //   },
-    // ],
     variants: [VariantSchema],
 
     desc1: { type: String },

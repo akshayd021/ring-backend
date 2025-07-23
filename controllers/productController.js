@@ -31,7 +31,10 @@ exports.addProduct = async (req, res) => {
     const product = await Product.create({
       name,
       sku,
-      category,
+      category: {
+        _id: category._id, // or req.body.category._id
+        subcategories: category.subcategories, // must be array of ObjectIds
+      },
       img,
       size,
       variant,
@@ -78,11 +81,12 @@ exports.getAllProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const Subcategory = require("../models/Subcategory");
-
     const product = await Product.findById(req.params.id)
-      .populate("category._id")
-      .populate("category.subcategories");
+      .populate("category._id") // Populate main category
+      .populate({
+        path: "category.subcategories", // ✅ populate only selected subcategories
+        model: "Subcategory",
+      });
 
     if (!product) {
       return res.status(404).json({
@@ -316,7 +320,6 @@ exports.addOrUpdateVariants = async (req, res) => {
 
     product.att = att;
     product.variants = variants;
-
     await product.save();
 
     return res.json({

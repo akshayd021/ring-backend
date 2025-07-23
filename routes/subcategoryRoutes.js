@@ -9,6 +9,7 @@ const {
   deleteSubcategory,
   updateMultipleSubcategoryStatus,
   deleteMultipleSubcategories,
+  getSubcategoriesByCategoryId,
 } = require("../controllers/subcategoryController");
 
 const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
@@ -16,6 +17,7 @@ const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
 router.post("/", mustLogin, isAdmin, addSubcategory);
 router.get("/", mustLogin, isAdmin, getAllSubcategories);
 router.get("/:subCatID", mustLogin, isAdmin, getSubcategoryById);
+router.get("/category/:categoryId", getSubcategoriesByCategoryId);
 router.put("/:subcategoryId", mustLogin, isAdmin, updateSubcategory);
 router.delete("/:subcategoryId", mustLogin, isAdmin, deleteSubcategory);
 router.put(
