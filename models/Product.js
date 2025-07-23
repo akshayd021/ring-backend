@@ -1,5 +1,21 @@
 const mongoose = require("mongoose");
 
+const VariantSchema = new mongoose.Schema(
+  {
+    combination: {
+      type: Object, // e.g., { attrId1: valueId1, attrId2: valueId2 }
+      required: true,
+    },
+    price: Number,
+    salePrice: Number,
+    sku: String,
+    barcode: String,
+    quantity: Number,
+    img: String,
+  },
+  { _id: false }
+);
+
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -20,12 +36,22 @@ const productSchema = new mongoose.Schema(
     },
     img: [{ type: String }],
     // size: [{ type: String }],
-  variant: [
-  {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Variant",
-  }
-],
+    // att: {
+    //   id1: ["sub1", "sub2"],
+    //   id2: ["sub3", "sub4"],
+    // },
+    att: {
+      type: Map,
+      of: [String],
+      default: {},
+    },
+    // variant: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Variant",
+    //   },
+    // ],
+    variants: [VariantSchema],
 
     desc1: { type: String },
     desc2: { type: String },

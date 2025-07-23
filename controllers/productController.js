@@ -60,9 +60,12 @@ exports.addProduct = async (req, res) => {
 };
 
 exports.getAllProducts = async (req, res) => {
+  // const Subcategory = require("../models/Subcategory");
   try {
     const products = await Product.find()
-      .populate("category  variant")
+      .populate("category._id")
+      .populate("category.subcategories")
+      .populate("variant")
       .sort({ createdAt: -1 });
     res.status(200).json({
       status: true,
@@ -299,5 +302,89 @@ exports.cancelOrder = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+exports.addOrUpdateVariants = async (req, res) => {
+  try {
+    const { productId, att, variants } = req.body;
+
+    let product = await Product.findById(productId);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Product not found" });
+    }
+
+    product.att = att;
+    product.variants = variants;
+
+    await product.save();
+
+    return res.json({
+      status: true,
+      message: "Variants saved successfully",
+      data: product,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+exports.getProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Product not found" });
+    }
+
+    return res.json({ status: true, data: product });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+exports.deleteAttributeOrValue = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { type, attrId, valueId } = req.body;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Product not found" });
+    }
+
+    if (type === "attribute") {
+      product.att.delete(attrId);
+      product.variants = product.variants.filter(
+        (variant) => !(attrId in variant.combination)
+      );
+    } else if (type === "value") {
+      const values = product.att.get(attrId);
+      if (Array.isArray(values)) {
+        product.att.set(
+          attrId,
+          values.filter((v) => v !== valueId)
+        );
+      }
+
+      product.variants = product.variants.filter(
+        (variant) => variant.combination[attrId] !== valueId
+      );
+    }
+
+    await product.save();
+    res.json({ status: true, message: "Deleted successfully", data: product });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };

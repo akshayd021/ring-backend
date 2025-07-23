@@ -14,7 +14,6 @@ const CustomeDesignReqRoutes = require("./routes/customDesignRequestRoutes");
 const CartRoutes = require("./routes/cartRoutes");
 const VariantRoutes = require("./routes/variantRoutes");
 const contactRoutes = require("./routes/contactRoutes");
-const productVariantRoutes = require("./routes/productVariantRoutes");
 
 const PORT = process.env.PORT || 5001;
 dotenv.config();
@@ -54,7 +53,6 @@ app.use("/api/custom-design-req", CustomeDesignReqRoutes);
 app.use("/api/cart", CartRoutes);
 app.use("/api/variant", VariantRoutes);
 app.use("/api/contact", contactRoutes);
-app.use("/api/product-variant", productVariantRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

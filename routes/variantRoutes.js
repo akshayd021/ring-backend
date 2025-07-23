@@ -19,7 +19,7 @@ router.get("/", getAllVariants); // Read all
 router.get("/:id", getVariantById); // Read one
 router.put("/:id", mustLogin, isAdmin, updateVariant); // Update
 router.delete("/:id", mustLogin, isAdmin, deleteVariant); // Delete
-router.post("/delete-multiple",mustLogin, isAdmin, deleteMultipleVariants);
+router.post("/delete-multiple", mustLogin, isAdmin, deleteMultipleVariants);
 
 router.post("/:id/value", addVariantValue);
 router.put("/value/:variantValueId", updateVariantValue);
