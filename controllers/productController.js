@@ -65,7 +65,6 @@ exports.getAllProducts = async (req, res) => {
     const products = await Product.find()
       .populate("category._id")
       .populate("category.subcategories")
-      .populate("variant")
       .sort({ createdAt: -1 });
     res.status(200).json({
       status: true,
@@ -83,8 +82,7 @@ exports.getProductById = async (req, res) => {
 
     const product = await Product.findById(req.params.id)
       .populate("category._id")
-      .populate("category.subcategories")
-      .populate("variant");
+      .populate("category.subcategories");
 
     if (!product) {
       return res.status(404).json({
