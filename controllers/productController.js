@@ -23,6 +23,7 @@ exports.addProduct = async (req, res) => {
       stock,
       store,
       bestseller,
+      variantsEnabled,
     } = req.body;
 
     const finalDiscount =
@@ -50,6 +51,7 @@ exports.addProduct = async (req, res) => {
       stock,
       store,
       bestseller,
+      variantsEnabled,
     });
 
     res.status(201).json({
@@ -124,6 +126,8 @@ exports.updateProduct = async (req, res) => {
       stock,
       img,
       store,
+      bestseller,
+      variantsEnabled,
     } = req.body;
 
     const updatedData = {
@@ -142,6 +146,8 @@ exports.updateProduct = async (req, res) => {
       stock,
       img,
       store,
+      variantsEnabled,
+      bestseller,
       discount:
         discount || Math.round(((originalPrice - price) / originalPrice) * 100),
       slug: slug

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const VariantSchema = new mongoose.Schema(
   {
     combination: {
-      type: Object, // e.g., { attrId1: valueId1, attrId2: valueId2 }
+      type: Object,
       required: true,
     },
     price: Number,
@@ -53,7 +53,7 @@ const productSchema = new mongoose.Schema(
     discount: { type: Number },
     stock: { type: Number, default: 0 },
     store: { type: Boolean, default: false },
-
+    variantsEnabled: { type: Boolean, default: false },
     bestseller: { type: Boolean, default: false },
   },
   { timestamps: true }
