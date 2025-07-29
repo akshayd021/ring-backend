@@ -85,10 +85,7 @@ exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
       .populate("category._id") // Populate main category
-      .populate({
-        path: "category.subcategories", // ✅ populate only selected subcategories
-        model: "Subcategory",
-      });
+      .populate("category.subcategories")
 
     if (!product) {
       return res.status(404).json({
@@ -317,7 +314,37 @@ exports.addOrUpdateVariants = async (req, res) => {
   try {
     const { productId, att, variants } = req.body;
 
-    let product = await Product.findById(productId);
+    if (!productId || !Array.isArray(variants) || typeof att !== "object") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid payload" });
+    }
+
+    const cleanVariants = variants
+      .map((v) => {
+        if (
+          !v.combination ||
+          typeof v.combination !== "object" ||
+          Array.isArray(v.combination)
+        )
+          return null;
+
+        return {
+          combination: v.combination,
+          combinationString: Object.entries(v.combination)
+            .map(([attrId, valueId]) => valueId)
+            .join(" / "),
+          price: v.price || 0,
+          salePrice: v.salePrice || 0,
+          sku: v.sku || "",
+          barcode: v.barcode || "",
+          quantity: v.quantity || 0,
+          img: Array.isArray(v.img) ? v.img : [],
+        };
+      })
+      .filter(Boolean);
+
+    const product = await Product.findById(productId);
     if (!product) {
       return res
         .status(404)
@@ -325,16 +352,12 @@ exports.addOrUpdateVariants = async (req, res) => {
     }
 
     product.att = att;
-    product.variants = variants;
+    product.variants = cleanVariants;
     await product.save();
 
-    return res.json({
-      status: true,
-      message: "Variants saved successfully",
-      data: product,
-    });
+    res.json({ status: true, message: "Variants updated", data: product });
   } catch (err) {
-    console.error(err);
+    console.error("Error updating variants:", err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 };

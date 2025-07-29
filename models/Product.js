@@ -6,6 +6,7 @@ const VariantSchema = new mongoose.Schema(
       type: Object,
       required: true,
     },
+    combinationString: { type: String },
     price: Number,
     salePrice: Number,
     sku: String,
