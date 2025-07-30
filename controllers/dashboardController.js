@@ -1,12 +1,12 @@
 const moment = require("moment");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 
 exports.getDashboardStats = async (req, res) => {
   try {
     let { from, to, month, year } = req.query;
 
-    // 🧠 Convert to Date Range
     let startDate, endDate;
     if (month && year) {
       startDate = moment(`${year}-${month}-01`).startOf("month").toDate();
@@ -15,7 +15,6 @@ exports.getDashboardStats = async (req, res) => {
       startDate = new Date(from);
       endDate = new Date(to);
     } else {
-      // Default: current month
       startDate = moment().startOf("month").toDate();
       endDate = moment().endOf("month").toDate();
     }
@@ -42,10 +41,18 @@ exports.getDashboardStats = async (req, res) => {
         },
       },
       { $unwind: "$productInfo" },
+
+      // Extract nested category._id to top level
+      {
+        $addFields: {
+          categoryId: "$productInfo.category._id",
+        },
+      },
+
       {
         $lookup: {
           from: "categories",
-          localField: "productInfo.category",
+          localField: "categoryId",
           foreignField: "_id",
           as: "categoryInfo",
         },
@@ -53,14 +60,16 @@ exports.getDashboardStats = async (req, res) => {
       { $unwind: "$categoryInfo" },
       {
         $group: {
-          _id: "$categoryInfo.name",
+          _id: {
+            _id: "$categoryInfo._id",
+            name: "$categoryInfo.name",
+          },
           totalSales: { $sum: "$products.quantity" },
           revenue: { $sum: "$products.price" },
         },
       },
       { $sort: { totalSales: -1 } },
     ]);
-
     // 3. Overview
     const salesOverview = await Order.aggregate([
       { $match: dateFilter },
@@ -74,17 +83,36 @@ exports.getDashboardStats = async (req, res) => {
     const overviewData = { pending: 0, processing: 0, delivered: 0, cancel: 0 };
     salesOverview.forEach((s) => (overviewData[s._id] = s.count));
 
-    // 4. Recent Orders (within filter)
     const recentOrders = await Order.find(dateFilter)
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate("userId", "email")
-      .populate("products.product", "name");
+      .populate("userId", "email firstname lastname")
 
-    // 5. Low Stock (all time)
+      .populate("products.product", "img name");
+
     const lowStockProducts = await Product.find({ stock: { $lte: 5 } })
-      .select("name stock category")
-      .populate("category", "name");
+      .select("name stock img category")
+      .lean();
+
+    const categoryIds = lowStockProducts
+      .map((p) => p.category?._id)
+      .filter(Boolean);
+
+    const categories = await Category.find({
+      _id: { $in: categoryIds },
+    }).select("name");
+
+    const categoryMap = {};
+    categories.forEach((cat) => {
+      categoryMap[cat._id.toString()] = cat.name;
+    });
+
+    const result = lowStockProducts.map((p) => ({
+      productName: p.name,
+      productImg: p.img?.[0] || null,
+      stock: p.stock,
+      categoryName: categoryMap[p.category?._id?.toString()] || "N/A",
+    }));
 
     res.status(200).json({
       status: true,
@@ -95,7 +123,7 @@ exports.getDashboardStats = async (req, res) => {
         salesByCategory,
         overview: overviewData,
         recentOrders,
-        lowStockProducts,
+        lowStockProducts: result,
       },
     });
   } catch (err) {
@@ -103,12 +131,10 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
-
 exports.getSalesOverviewChart = async (req, res) => {
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear();
 
-    // Create monthly buckets for the given year
     const monthlyData = await Order.aggregate([
       {
         $match: {
@@ -129,7 +155,6 @@ exports.getSalesOverviewChart = async (req, res) => {
       { $sort: { "_id.month": 1 } },
     ]);
 
-    // Prepare chart data for all 12 months
     const chartData = Array.from({ length: 12 }, (_, i) => {
       const found = monthlyData.find((m) => m._id.month === i + 1);
       return {

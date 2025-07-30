@@ -1,5 +1,6 @@
 const Product = require("../models/Product");
 const Order = require("../models/Order");
+const Variant = require("../models/Variant");
 const slugify = require("slugify");
 
 exports.addProduct = async (req, res) => {
@@ -84,8 +85,8 @@ exports.getAllProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category._id") // Populate main category
-      .populate("category.subcategories")
+      .populate("category._id")
+      .populate("category.subcategories");
 
     if (!product) {
       return res.status(404).json({
@@ -94,15 +95,44 @@ exports.getProductById = async (req, res) => {
       });
     }
 
+    // Fetch all variant definitions
+    const variantDefs = await Variant.find({ status: "show" });
+
+    // Create a map: valueId -> valueText
+    const valueIdToTextMap = {};
+    variantDefs.forEach((variantDef) => {
+      variantDef.variants.forEach((v) => {
+        valueIdToTextMap[v._id.toString()] = v.value;
+      });
+    });
+
+    // Update each variant's combinationString
+    const updatedVariants = product.variants.map((variant) => {
+      const ids = variant.combinationString.split(" / ");
+      const readableValues = ids.map((id) => valueIdToTextMap[id] || id);
+      const updatedCombinationString = readableValues.join(" / ");
+      return {
+        ...variant._doc,
+        combinationString: updatedCombinationString,
+      };
+    });
+
+    // Replace the original variants array
+    const updatedProduct = {
+      ...product._doc,
+      variants: updatedVariants,
+    };
+
     res.status(200).json({
       status: true,
       message: "Product fetched successfully",
-      data: product,
+      data: updatedProduct,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
   }
 };
+
 exports.updateProduct = async (req, res) => {
   try {
     const {
