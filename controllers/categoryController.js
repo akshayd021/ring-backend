@@ -1,4 +1,5 @@
 const Category = require("../models/Category");
+const Subcategory = require("../models/Subcategory");
 
 // ✅ Add Category
 exports.addCategory = async (req, res) => {
@@ -34,11 +35,16 @@ exports.getAllCategories = async (req, res) => {
 // ✅ Get Single Category
 exports.getCategoryById = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
-    if (!category)
+    const category = await Category.findById(req.params.id).populate({
+      path: "subcategories",
+      model: "Subcategory",
+    });
+
+    if (!category) {
       return res
         .status(404)
         .json({ status: false, message: "Category not found" });
+    }
 
     res.status(200).json({
       status: true,
