@@ -20,6 +20,7 @@ dotenv.config();
 const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
+  "https://ring-frontend-xi.vercel.app/",
   "https://yourfrontenddomain.com",
 ];
 app.use(
