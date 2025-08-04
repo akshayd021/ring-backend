@@ -14,8 +14,8 @@ const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
 const { cancelOrder } = require("../controllers/productController");
 
 router.post("/", mustLogin, createOrder);
-router.get("/", mustLogin, isAdmin, getAllOrders);
-router.get("/:id", mustLogin, getOrderById);
+router.get("/", getAllOrders);
+router.get("/:id", getOrderById);
 router.get("/user/:userId", mustLogin, getOrdersByUser);
 router.put("/:id/status", mustLogin, isAdmin, updateOrderStatus);
 router.put("/:id/cancel", mustLogin, cancelOrder);

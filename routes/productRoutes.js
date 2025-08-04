@@ -18,17 +18,17 @@ const {
 } = require("../controllers/productController");
 
 router.post("/", mustLogin, isAdmin, addProduct);
-router.get("/", mustLogin, getAllProducts);
+router.get("/", getAllProducts);
 router.get("/store", getProductsInStore);
 router.get("/active", getActiveProducts);
 router.get("/slug/:slug", getProductBySlug);
-router.get("/:id", mustLogin, isAdmin, getProductById);
+router.get("/:id", getProductById);
 router.put("/:id", mustLogin, isAdmin, updateProduct);
 router.delete("/:id", mustLogin, isAdmin, deleteProduct);
 
 router.post("/variant", mustLogin, addOrUpdateVariants);
 
-router.get("/:id", mustLogin, getProduct);
+router.get("/:id",  getProduct);
 
 router.delete("/:productId/variant", mustLogin, deleteAttributeOrValue);
 
