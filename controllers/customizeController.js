@@ -31,24 +31,56 @@ exports.getCustomizeSingleData = async (req, res) => {
 
 
 exports.addCustomizeData = async (req, res) => {
-    const { product_id } = req.body;
+    const { product } = req.body; // <- match schema key!
+
     try {
-        const addCustomize = await Customize.create({ product_id })
-        if (!addCustomize || addCustomize === null) {
-            res.status(400).json({
+        const addCustomize = await Customize.create({ product });
+
+        if (!addCustomize) {
+            return res.status(400).json({
                 status: false,
-                message: "Product Wrong ProductID"
-            })
+                message: "Invalid Product ID",
+            });
         }
+
         res.status(201).json({
             status: true,
-            message: "Customize Added SuccessFully",
+            message: "Customize Added Successfully",
+            data: addCustomize,
         });
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({
             status: false,
-            message: "Failed to Fetched Customize Data",
+            message: "Failed to Add Customize Data",
             error: err.message,
-        }); 
+        });
     }
-}
+};
+
+exports.updateCustomizeData = async (req, res) => {
+    const { id } = req.params;
+    const { product } = req.body;
+
+    try {
+        const updatedCustomize = await Customize.findByIdAndUpdate(
+            id,
+            { product },
+            { new: true, runValidators: true }
+        );
+
+        res.status(200).json({
+            status: true,
+            message: "Customize Updated Successfully",
+            data: updatedCustomize,
+        });
+    } catch (err) {
+        res.status(500).json({
+            status: false,
+            message: "Failed to update Customize data",
+            error: err.message,
+        });
+    }
+};
+
+
+
