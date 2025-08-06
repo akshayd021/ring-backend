@@ -14,6 +14,7 @@ const CustomeDesignReqRoutes = require("./routes/customDesignRequestRoutes");
 const CartRoutes = require("./routes/cartRoutes");
 const VariantRoutes = require("./routes/variantRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const customizeRoutes = require("./routes/customizeRoutes");
 
 const PORT = process.env.PORT || 5001;
 dotenv.config();
@@ -23,7 +24,6 @@ const allowedOrigins = [
   "https://ring-frontend-xi.vercel.app",
   "https://yourfrontenddomain.com",
 ];
-
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -50,12 +50,13 @@ app.use("/api/sub-category", SubcategoryRoutes);
 app.use("/api/product", ProductRoutes);
 app.use("/api/order", OrderRputes);
 app.use("/api/dashboard", DashborardRoutes);
-app.use("/api/customize", CusomizeRoutes);
+// app.use("/api/customize", CusomizeRoutes);
 app.use("/api/cotact-section", ContactRoutes);
 app.use("/api/custom-design-req", CustomeDesignReqRoutes);
 app.use("/api/cart", CartRoutes);
 app.use("/api/variant", VariantRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/customize", customizeRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
