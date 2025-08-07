@@ -6,6 +6,8 @@ const categorySchema = new mongoose.Schema(
     img: { type: String },
     desc: { type: String },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
+    productCount: { type: Number, default: 0 },
+
     subcategories: [
       {
         type: mongoose.Schema.Types.ObjectId,

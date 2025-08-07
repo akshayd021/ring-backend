@@ -28,7 +28,7 @@ router.delete("/:id", mustLogin, isAdmin, deleteProduct);
 
 router.post("/variant", mustLogin, addOrUpdateVariants);
 
-router.get("/:id",  getProduct);
+router.get("/:id", getProduct);
 
 router.delete("/:productId/variant", mustLogin, deleteAttributeOrValue);
 

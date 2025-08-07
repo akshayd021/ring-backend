@@ -2,6 +2,8 @@ const Product = require("../models/Product");
 const Order = require("../models/Order");
 const Variant = require("../models/Variant");
 const slugify = require("slugify");
+const Category = require("../models/Category");
+const Subcategory = require("../models/Subcategory");
 
 exports.addProduct = async (req, res) => {
   try {
@@ -34,8 +36,8 @@ exports.addProduct = async (req, res) => {
       name,
       sku,
       category: {
-        _id: category._id, // or req.body.category._id
-        subcategories: category.subcategories, // must be array of ObjectIds
+        _id: category._id,
+        subcategories: category.subcategories,
       },
       img,
       size,
@@ -55,6 +57,22 @@ exports.addProduct = async (req, res) => {
       variantsEnabled,
     });
 
+    await Category.findByIdAndUpdate(
+      category._id,
+      { $inc: { productCount: 1 } },
+      { new: true }
+    );
+
+    if (category.subcategories && category.subcategories.length > 0) {
+      const subcategoryUpdatePromises = category.subcategories.map((subcatId) =>
+        Subcategory.findByIdAndUpdate(
+          subcatId,
+          { $inc: { productCount: 1 } },
+          { new: true }
+        )
+      );
+      await Promise.all(subcategoryUpdatePromises);
+    }
     res.status(201).json({
       status: true,
       message: "Product created successfully",
@@ -211,6 +229,23 @@ exports.deleteProduct = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Product not found" });
 
+    await Category.findByIdAndUpdate(
+      deleted.category._id,
+      { $inc: { productCount: -1 } },
+      { new: true }
+    );
+
+    if (deleted.category?.subcategories?.length > 0) {
+      const updateSubcategories = deleted.category.subcategories.map(
+        (subcatId) =>
+          Subcategory.findByIdAndUpdate(
+            subcatId,
+            { $inc: { productCount: -1 } },
+            { new: true }
+          )
+      );
+      await Promise.all(updateSubcategories);
+    }
     res.status(200).json({
       status: true,
       message: "Product deleted successfully",
@@ -287,12 +322,63 @@ exports.updateMultipleProductStatus = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
-
 exports.deleteMultipleProducts = async (req, res) => {
   try {
     const { ids } = req.body;
 
+    // Step 1: Fetch all products to be deleted
+    const products = await Product.find({ _id: { $in: ids } });
+
+    if (products.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "No products found" });
+    }
+
+    // Step 2: Group counts by Category and Subcategory
+    const categoryCounts = {};
+    const subcategoryCounts = {};
+
+    products.forEach((product) => {
+      const categoryId = product.category?._id?.toString();
+      if (categoryId) {
+        categoryCounts[categoryId] = (categoryCounts[categoryId] || 0) + 1;
+      }
+
+      const subcatIds = product.category?.subcategories || [];
+      subcatIds.forEach((subcatId) => {
+        const sid = subcatId.toString();
+        subcategoryCounts[sid] = (subcategoryCounts[sid] || 0) + 1;
+      });
+    });
+
+    // Step 3: Delete all products
     await Product.deleteMany({ _id: { $in: ids } });
+
+    // Step 4: Decrement Category productCounts
+    const categoryUpdatePromises = Object.entries(categoryCounts).map(
+      ([categoryId, count]) =>
+        Category.findByIdAndUpdate(
+          categoryId,
+          { $inc: { productCount: -count } },
+          { new: true }
+        )
+    );
+
+    // Step 5: Decrement Subcategory productCounts
+    const subcategoryUpdatePromises = Object.entries(subcategoryCounts).map(
+      ([subcatId, count]) =>
+        Subcategory.findByIdAndUpdate(
+          subcatId,
+          { $inc: { productCount: -count } },
+          { new: true }
+        )
+    );
+
+    await Promise.all([
+      ...categoryUpdatePromises,
+      ...subcategoryUpdatePromises,
+    ]);
 
     res.status(200).json({
       status: true,
@@ -303,7 +389,6 @@ exports.deleteMultipleProducts = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
-
 exports.cancelOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
