@@ -229,23 +229,22 @@ exports.deleteProduct = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Product not found" });
 
-    await Category.findByIdAndUpdate(
-      deleted.category._id,
-      { $inc: { productCount: -1 } },
-      { new: true }
+    await Category.updateOne(
+      { _id: deleted.category._id, productCount: { $gt: 0 } }, // only if > 0
+      { $inc: { productCount: -1 } }
     );
 
     if (deleted.category?.subcategories?.length > 0) {
       const updateSubcategories = deleted.category.subcategories.map(
         (subcatId) =>
-          Subcategory.findByIdAndUpdate(
-            subcatId,
-            { $inc: { productCount: -1 } },
-            { new: true }
+          Subcategory.updateOne(
+            { _id: subcatId, productCount: { $gt: 0 } },
+            { $inc: { productCount: -1 } }
           )
       );
       await Promise.all(updateSubcategories);
     }
+
     res.status(200).json({
       status: true,
       message: "Product deleted successfully",
@@ -358,20 +357,24 @@ exports.deleteMultipleProducts = async (req, res) => {
     // Step 4: Decrement Category productCounts
     const categoryUpdatePromises = Object.entries(categoryCounts).map(
       ([categoryId, count]) =>
-        Category.findByIdAndUpdate(
-          categoryId,
-          { $inc: { productCount: -count } },
-          { new: true }
+        Category.updateOne(
+          {
+            _id: categoryId,
+            productCount: { $gte: count }, // Only decrement if enough count exists
+          },
+          { $inc: { productCount: -count } }
         )
     );
 
     // Step 5: Decrement Subcategory productCounts
     const subcategoryUpdatePromises = Object.entries(subcategoryCounts).map(
       ([subcatId, count]) =>
-        Subcategory.findByIdAndUpdate(
-          subcatId,
-          { $inc: { productCount: -count } },
-          { new: true }
+        Subcategory.updateOne(
+          {
+            _id: subcatId,
+            productCount: { $gte: count }, // Prevent negative values
+          },
+          { $inc: { productCount: -count } }
         )
     );
 
