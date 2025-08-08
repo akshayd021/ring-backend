@@ -1,108 +1,57 @@
 const Customize = require("../models/Customize");
 const Product = require("../models/Product");
 
-exports.getCustomizeSingleData = async (req, res) => {
-    const { id } = req.params
-    console.log("req.params:", req.params);
-    console.log(id, 'product_id')
-    try {
-        const customize = await Product.findById(id)
-        // .populate("product._id")
+exports.setTopSellers = async (req, res) => {
+  try {
+    const { productIds } = req.body;
 
-        if (!customize || customize === null) {
-            res.status(400).json({
-                status: false,
-                message: "Product not Found"
-            })
-        }
-        res.status(201).json({
-            status: true,
-            message: "Customize Fetched SuccessFully",
-            data: customize
-        });
-    } catch (err) {
-        res.status(500).json({
-            status: false,
-            message: "Failed to Fetched Customize Data",
-            error: err.message,
-        });
+    if (!Array.isArray(productIds) || productIds.length !== 5) {
+      return res.status(400).json({
+        status: false,
+        message: "You must provide exactly 5 product IDs.",
+      });
     }
+
+    // Clear existing top sellers
+    await Customize.deleteMany({});
+
+    // Set new top sellers
+    const customizeDocs = await Customize.insertMany(
+      productIds.map((id) => ({ product: id }))
+    );
+
+    // Optionally update the `bestseller` field on the Product model
+    await Product.updateMany({}, { $set: { bestseller: false } });
+    await Product.updateMany(
+      { _id: { $in: productIds } },
+      { $set: { bestseller: true } }
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Top seller products updated successfully.",
+      data: customizeDocs,
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
 };
 
+exports.getTopSellers = async (req, res) => {
+  try {
+    const customize = await Customize.find().populate("product");
 
-exports.addCustomizeData = async (req, res) => {
-    const { product } = req.body; // <- match schema key!
-
-    try {
-        const addCustomize = await Customize.create({ product });
-
-        if (!addCustomize) {
-            return res.status(400).json({
-                status: false,
-                message: "Invalid Product ID",
-            });
-        }
-
-        res.status(201).json({
-            status: true,
-            message: "Customize Added Successfully",
-            data: addCustomize,
-        });
-    } catch (err) {
-        res.status(500).json({
-            status: false,
-            message: "Failed to Add Customize Data",
-            error: err.message,
-        });
+    if (!customize) {
+      return res
+        .status(404)
+        .json({ status: false, message: "No top sellers found" });
     }
+
+    res.status(200).json({
+      status: true,
+      data: customize,
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
 };
-
-
-exports.updateCustomizeData = async (req, res) => {
-    const { id } = req.params;
-    const { product } = req.body;
-
-    try {
-        // First, check if the document exists
-        const existingCustomize = await Customize.findById(id);
-
-        if (existingCustomize) {
-            // ✅ Document exists → Update it
-            const updatedCustomize = await Customize.findByIdAndUpdate(
-                id,
-                { product },
-                { new: true, runValidators: true }
-            );
-
-            return res.status(200).json({
-                status: true,
-                message: "Customize Updated Successfully",
-                data: updatedCustomize,
-            });
-        } else {
-            // ❌ Document does not exist → Create it with custom _id
-            const newCustomize = new Customize({
-                product,
-            });
-
-            await newCustomize.save();
-
-            return res.status(201).json({
-                status: true,
-                message: "Customize Created Successfully",
-                data: newCustomize,
-            });
-        }
-    } catch (err) {
-        return res.status(500).json({
-            status: false,
-            message: "Failed to update or create Customize data",
-            error: err.message,
-        });
-    }
-};
-
-
-
-
-

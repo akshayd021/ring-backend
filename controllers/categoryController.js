@@ -1,7 +1,6 @@
 const Category = require("../models/Category");
 const Subcategory = require("../models/Subcategory");
 
-// ✅ Add Category
 exports.addCategory = async (req, res) => {
   try {
     const { name, desc, status, img } = req.body;
@@ -18,7 +17,6 @@ exports.addCategory = async (req, res) => {
   }
 };
 
-// ✅ Get All Categories
 exports.getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ createdAt: -1 });
@@ -32,7 +30,6 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
-// ✅ Get Single Category
 exports.getCategoryById = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id).populate({
@@ -56,7 +53,6 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
-// ✅ Update Category
 exports.updateCategory = async (req, res) => {
   try {
     const { name, desc, img, status } = req.body;
