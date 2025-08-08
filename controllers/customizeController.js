@@ -57,30 +57,52 @@ exports.addCustomizeData = async (req, res) => {
     }
 };
 
+
 exports.updateCustomizeData = async (req, res) => {
     const { id } = req.params;
     const { product } = req.body;
 
     try {
-        const updatedCustomize = await Customize.findByIdAndUpdate(
-            id,
-            { product },
-            { new: true, runValidators: true }
-        );
+        // First, check if the document exists
+        const existingCustomize = await Customize.findById(id);
 
-        res.status(200).json({
-            status: true,
-            message: "Customize Updated Successfully",
-            data: updatedCustomize,
-        });
+        if (existingCustomize) {
+            // ✅ Document exists → Update it
+            const updatedCustomize = await Customize.findByIdAndUpdate(
+                id,
+                { product },
+                { new: true, runValidators: true }
+            );
+
+            return res.status(200).json({
+                status: true,
+                message: "Customize Updated Successfully",
+                data: updatedCustomize,
+            });
+        } else {
+            // ❌ Document does not exist → Create it with custom _id
+            const newCustomize = new Customize({
+                product,
+            });
+
+            await newCustomize.save();
+
+            return res.status(201).json({
+                status: true,
+                message: "Customize Created Successfully",
+                data: newCustomize,
+            });
+        }
     } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             status: false,
-            message: "Failed to update Customize data",
+            message: "Failed to update or create Customize data",
             error: err.message,
         });
     }
 };
+
+
 
 
 

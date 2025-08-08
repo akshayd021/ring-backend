@@ -41,8 +41,7 @@ exports.createOrder = async (req, res) => {
       await sendEmail(
         populatedOrder.userId.email,
         "Your Order Invoice",
-        `Thank you ${
-          populatedOrder.userId.name || "Customer"
+        `Thank you ${populatedOrder.userId.name || "Customer"
         }, please find your invoice attached.`,
         filename
       );
@@ -234,6 +233,26 @@ exports.deleteMultipleOrders = async (req, res) => {
     res.status(200).json({
       status: true,
       message: `${result.deletedCount} orders deleted successfully`,
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+exports.deleteAllOrders = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const result = await Order.deleteMany({ userId });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No orders found for this user",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: `${result.deletedCount} All Order Deleted successfully`,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
