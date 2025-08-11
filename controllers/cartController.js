@@ -119,3 +119,25 @@ exports.removeCartItem = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.deleteAllCarts = async (req, res) => {
+  const { userId } = req.body;
+  console.log(userId, "id")
+  try {
+    const result = await Cart.deleteMany({ userId });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No Data found for this user",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: `All Data Deleted successfully`,
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
