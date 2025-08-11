@@ -84,7 +84,6 @@ exports.addProduct = async (req, res) => {
 };
 
 exports.getAllProducts = async (req, res) => {
-  // const Subcategory = require("../models/Subcategory");
   try {
     const products = await Product.find()
       .populate("category._id")
@@ -112,11 +111,8 @@ exports.getProductById = async (req, res) => {
         message: "Product not found",
       });
     }
-
-    // Fetch all variant definitions
     const variantDefs = await Variant.find({ status: "show" });
 
-    // Create a map: valueId -> valueText
     const valueIdToTextMap = {};
     variantDefs.forEach((variantDef) => {
       variantDef.variants.forEach((v) => {
@@ -124,7 +120,6 @@ exports.getProductById = async (req, res) => {
       });
     });
 
-    // Update each variant's combinationString
     const updatedVariants = product.variants.map((variant) => {
       const ids = variant.combinationString.split(" / ");
       const readableValues = ids.map((id) => valueIdToTextMap[id] || id);
@@ -321,20 +316,28 @@ exports.updateMultipleProductStatus = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
+
 exports.deleteMultipleProducts = async (req, res) => {
   try {
     const { ids } = req.body;
 
-    // Step 1: Fetch all products to be deleted
-    const products = await Product.find({ _id: { $in: ids } });
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid or empty product IDs" });
+    }
 
+    const objectIds = ids.map((id) => new mongoose.Types.ObjectId(id));
+
+    // Step 1: Fetch products
+    const products = await Product.find({ _id: { $in: objectIds } });
     if (products.length === 0) {
       return res
         .status(404)
         .json({ status: false, message: "No products found" });
     }
 
-    // Step 2: Group counts by Category and Subcategory
+    // Step 2: Count categories and subcategories
     const categoryCounts = {};
     const subcategoryCounts = {};
 
@@ -351,28 +354,27 @@ exports.deleteMultipleProducts = async (req, res) => {
       });
     });
 
-    // Step 3: Delete all products
-    await Product.deleteMany({ _id: { $in: ids } });
+    // Step 3: Delete products
+    await Product.deleteMany({ _id: { $in: objectIds } });
 
-    // Step 4: Decrement Category productCounts
+    // Step 4: Update category/subcategory counts safely
     const categoryUpdatePromises = Object.entries(categoryCounts).map(
       ([categoryId, count]) =>
         Category.updateOne(
           {
             _id: categoryId,
-            productCount: { $gte: count }, // Only decrement if enough count exists
+            productCount: { $gte: count },
           },
           { $inc: { productCount: -count } }
         )
     );
 
-    // Step 5: Decrement Subcategory productCounts
     const subcategoryUpdatePromises = Object.entries(subcategoryCounts).map(
       ([subcatId, count]) =>
         Subcategory.updateOne(
           {
             _id: subcatId,
-            productCount: { $gte: count }, // Prevent negative values
+            productCount: { $gte: count },
           },
           { $inc: { productCount: -count } }
         )
@@ -383,12 +385,13 @@ exports.deleteMultipleProducts = async (req, res) => {
       ...subcategoryUpdatePromises,
     ]);
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Products deleted successfully",
       data: ids,
     });
   } catch (err) {
+    console.error("Delete error:", err);
     res.status(500).json({ status: false, message: err.message });
   }
 };

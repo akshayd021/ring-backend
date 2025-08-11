@@ -19,7 +19,11 @@ exports.addCategory = async (req, res) => {
 
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ createdAt: -1 });
+    const categories = await Category.find().sort({ createdAt: -1 }).populate({
+      path: "subcategories",
+      select: "name",
+    });
+
     res.status(200).json({
       status: true,
       message: "All categories fetched successfully",
