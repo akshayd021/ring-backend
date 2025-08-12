@@ -21,7 +21,7 @@ router.post("/", mustLogin, isAdmin, addProduct);
 router.get("/", getAllProducts);
 router.get("/store", getProductsInStore);
 router.get("/active", getActiveProducts);
-router.get("/slug/:slug", getProductBySlug);
+router.get("/:slug", getProductBySlug);
 router.get("/:id", getProductById);
 router.put("/:id", mustLogin, isAdmin, updateProduct);
 router.delete("/:id", mustLogin, isAdmin, deleteProduct);
