@@ -252,18 +252,41 @@ exports.deleteProduct = async (req, res) => {
 
 exports.getProductBySlug = async (req, res) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug }).populate(
-      "category variant"
-    );
+    const product = await Product.findOne({ slug: req.params.slug })
+      .populate("category._id")
+      .populate("category.subcategories");
     if (!product)
       return res
         .status(404)
         .json({ status: false, message: "Product not found" });
 
+    const variantDefs = await Variant.find({ status: "show" });
+    const valueIdToTextMap = {};
+    variantDefs.forEach((variantDef) => {
+      variantDef.variants.forEach((v) => {
+        valueIdToTextMap[v._id.toString()] = v.value;
+      });
+    });
+
+    const updatedVariants = product.variants.map((variant) => {
+      const ids = variant.combinationString.split(" / ");
+      const readableValues = ids.map((id) => valueIdToTextMap[id] || id);
+      const updatedCombinationString = readableValues.join(" / ");
+      return {
+        ...variant._doc,
+        combinationString: updatedCombinationString,
+      };
+    });
+
+    // Replace the original variants array
+    const updatedProduct = {
+      ...product._doc,
+      variants: updatedVariants,
+    };
     res.status(200).json({
       status: true,
       message: "Product fetched by slug successfully",
-      data: product,
+      data: updatedProduct,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
