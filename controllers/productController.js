@@ -4,6 +4,7 @@ const Variant = require("../models/Variant");
 const slugify = require("slugify");
 const Category = require("../models/Category");
 const Subcategory = require("../models/Subcategory");
+const mongoose = require("mongoose");
 
 exports.addProduct = async (req, res) => {
   try {
