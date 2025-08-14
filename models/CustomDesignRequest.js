@@ -1,3 +1,4 @@
+// models/CustomDesignRequest.js
 const mongoose = require("mongoose");
 
 const customDesignRequestSchema = new mongoose.Schema(
@@ -9,14 +10,14 @@ const customDesignRequestSchema = new mongoose.Schema(
     nation: { type: String, required: true },
 
     product: {
-      type: { type: String, required: true }, // e.g. Ring, Necklace
-      variant: { type: String }, // e.g. Gold, Silver
+      type: { type: String, required: true },
+      variant: { type: String },
       desc: { type: String },
 
-      // allow multiple images
+      // Multiple images
       images: { type: [String], default: [] },
 
-      // allow multiple videos
+      // Multiple videos
       videos: { type: [String], default: [] },
     },
 
@@ -26,7 +27,7 @@ const customDesignRequestSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    notes: { type: String }, // admin notes or internal comments
+    notes: { type: String },
   },
   { timestamps: true }
 );
