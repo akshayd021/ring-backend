@@ -12,7 +12,12 @@ const customDesignRequestSchema = new mongoose.Schema(
       type: { type: String, required: true }, // e.g. Ring, Necklace
       variant: { type: String }, // e.g. Gold, Silver
       desc: { type: String },
-      img: { type: String }, // could be Cloudinary or direct URL
+
+      // allow multiple images
+      images: { type: [String], default: [] },
+
+      // allow multiple videos
+      videos: { type: [String], default: [] },
     },
 
     status: {
@@ -26,7 +31,4 @@ const customDesignRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model(
-  "CustomDesignRequest",
-  customDesignRequestSchema
-);
+module.exports = mongoose.model("CustomDesignRequest", customDesignRequestSchema);

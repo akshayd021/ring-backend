@@ -8,7 +8,6 @@ const SubcategoryRoutes = require("./routes/subcategoryRoutes");
 const ProductRoutes = require("./routes/productRoutes");
 const OrderRputes = require("./routes/orderRoutes");
 const DashborardRoutes = require("./routes/dashboardRoutes");
-const CusomizeRoutes = require("./routes/customDesignRoutes");
 const ContactRoutes = require("./routes/contactSectionRoutes");
 const CustomeDesignReqRoutes = require("./routes/customDesignRequestRoutes");
 const CartRoutes = require("./routes/cartRoutes");
