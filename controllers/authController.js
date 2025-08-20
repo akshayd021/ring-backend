@@ -209,41 +209,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.addAddress = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-
-    if (user.addresses.length >= 5) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Max 5 addresses allowed" });
-    }
-
-    const newAddress = req.body;
-
-    // If user sets isDefault true, unset others
-    if (newAddress.isDefault) {
-      user.addresses.forEach((addr) => (addr.isDefault = false));
-    }
-
-    user.addresses.push(newAddress);
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Address added successfully",
-      data: user.addresses,
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
 exports.changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword, confirmPassword } = req.body;
@@ -292,6 +257,46 @@ exports.changePassword = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await User.findByIdAndDelete(id);
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    res.json({
+      success: true,
+      message: "User deleted successfully",
+      data: deleted,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteMultipleUsers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "IDs array is required" });
+    }
+
+    const result = await User.deleteMany({ _id: { $in: ids } });
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} user(s) deleted successfully`,
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -378,25 +383,6 @@ exports.deleteAddress = async (req, res) => {
   }
 };
 
-exports.deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deleted = await User.findByIdAndDelete(id);
-    if (!deleted) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-    res.json({
-      success: true,
-      message: "User deleted successfully",
-      data: deleted,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 exports.deleteMultipleUsers = async (req, res) => {
   try {
     const { ids } = req.body;
@@ -420,7 +406,7 @@ exports.deleteMultipleUsers = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { firstname, lastname, mobileNumber } = req.body;
+    const { firstname, lastname, mobileNumber, address } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -430,22 +416,39 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // Update only provided fields
+    // ✅ Update profile fields if provided
     if (firstname) user.firstname = firstname;
     if (lastname) user.lastname = lastname;
     if (mobileNumber) user.mobileNumber = mobileNumber;
+
+    // ✅ Handle address addition if provided
+    if (address) {
+      if (user.addresses.length >= 5) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Max 5 addresses allowed" });
+      }
+
+      // If address.isDefault = true → unset other defaults
+      if (address.isDefault) {
+        user.addresses.forEach((addr) => (addr.isDefault = false));
+      }
+
+      user.addresses.push(address);
+    }
 
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: "Profile updated successfully",
+      message: "Profile and address updated successfully",
       data: {
         id: user._id,
         firstname: user.firstname,
         lastname: user.lastname,
         email: user.email,
         mobileNumber: user.mobileNumber,
+        addresses: user.addresses,
       },
     });
   } catch (err) {
