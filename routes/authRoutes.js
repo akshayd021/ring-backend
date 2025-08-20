@@ -15,6 +15,7 @@ const {
   updateAddress,
   deleteUser,
   deleteMultipleUsers,
+  updateProfile,
 } = require("../controllers/authController");
 
 const { mustLogin, isAdmin } = require("../middlewares/authMiddleware");
@@ -32,5 +33,7 @@ router.delete("/users/delete", mustLogin, isAdmin, deleteMultipleUsers);
 router.delete("/users/:id", mustLogin, isAdmin, deleteUser);
 router.post("/add-address", mustLogin, addAddress);
 router.put("/update-address/:addressId", mustLogin, updateAddress);
+router.put("/update-profile", mustLogin, updateProfile);
 router.delete("/delete-address/:addressId", mustLogin, deleteAddress);
 module.exports = router;
+
