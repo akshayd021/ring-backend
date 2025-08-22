@@ -13,6 +13,7 @@ exports.generateInvoice = async (order, filename) => {
     const stream = fs.createWriteStream(filename);
     doc.pipe(stream);
 
+    // ✅ Company Header
     doc
       .fontSize(20)
       .text("Your Company Name Pvt Ltd", { align: "center" })
@@ -25,35 +26,38 @@ exports.generateInvoice = async (order, filename) => {
     doc.fontSize(16).text("Invoice", { underline: true });
     doc.moveDown();
     doc.fontSize(12).text(`Invoice #: ${order._id}`);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`);
+    doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`);
     doc.moveDown();
 
-    // ✅ Customer Info
-    const { userId } = order;
-    doc.text(`Customer: ${userId.firstname} ${userId.lastname}`);
-    doc.text(`Email: ${userId.email}`);
-    doc.text(`Phone: ${userId.mobileNumber}`);
-    doc.text(
-      `Address: ${userId.address}, ${userId.city}, ${userId.country} - ${userId.pincode}`
-    );
-    doc.moveDown();
+    // ✅ Customer Info (from order.address snapshot)
+    const { address, userId } = order;
+    doc.font("Helvetica-Bold").text("Bill To:");
+    doc.font("Helvetica").text(`${address.firstName} ${address.lastName}`);
+    doc.text(`Mobile: ${address.mobile}`);
+    doc.text(`${address.street}`);
+    doc.text(`${address.city}, ${address.state}`);
+    doc.text(`${address.country} - ${address.pincode}`);
+    if (userId?.email) {
+      doc.text(`Email: ${userId.email}`);
+    }
+    doc.moveDown(2);
 
     // ✅ Product Table
-    doc
-      .font("Helvetica-Bold")
-      .text("Items Purchased:", { underline: true })
-      .moveDown();
+    doc.font("Helvetica-Bold").text("Items Purchased:", { underline: true });
+    doc.moveDown();
+
     order.products.forEach((p, i) => {
       const product = p.product;
       const name = product?.name || "Unknown Product";
       const line = `${i + 1}. ${name} | Qty: ${p.quantity} | Price: ₹${
         p.price
-      }`;
+      } | Total: ₹${p.price * p.quantity}`;
       doc.font("Helvetica").text(line);
     });
 
     doc.moveDown();
 
+    // ✅ Tax & Totals
     const taxRate = 0.18; // 18% GST
     const tax = order.subtotal * taxRate;
     const net = order.subtotal + tax + order.shippingCost - order.discount;
@@ -65,10 +69,11 @@ exports.generateInvoice = async (order, filename) => {
       .text(`Shipping Cost: ₹${order.shippingCost.toFixed(2)}`)
       .text(`Discount: -₹${order.discount.toFixed(2)}`)
       .text(`Total Payable: ₹${net.toFixed(2)}`)
-      .moveDown();
+      .moveDown(2);
 
-    doc.text(`Payment Method: ${order.paymentMethod}`);
-    doc.text(`Status: ${order.status}`);
+    // ✅ Payment & Status
+    doc.font("Helvetica").text(`Payment Method: ${order.paymentMethod}`);
+    doc.text(`Order Status: ${order.status}`);
 
     doc.end();
 

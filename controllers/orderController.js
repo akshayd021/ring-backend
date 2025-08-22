@@ -10,6 +10,7 @@ exports.createOrder = async (req, res) => {
   try {
     const {
       userId,
+      address, // 👈 take only one selected address
       products,
       subtotal,
       shippingCost,
@@ -21,6 +22,7 @@ exports.createOrder = async (req, res) => {
 
     const order = await Order.create({
       userId,
+      address, // 👈 store address snapshot
       products,
       subtotal,
       shippingCost,
@@ -41,7 +43,8 @@ exports.createOrder = async (req, res) => {
       await sendEmail(
         populatedOrder.userId.email,
         "Your Order Invoice",
-        `Thank you ${populatedOrder.userId.name || "Customer"
+        `Thank you ${
+          populatedOrder.userId.name || "Customer"
         }, please find your invoice attached.`,
         filename
       );
