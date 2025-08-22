@@ -307,39 +307,37 @@ exports.updateAddress = async (req, res) => {
 
     const user = await User.findById(req.user.id);
     if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
 
     const index = user.addresses.findIndex(
       (a) => a._id.toString() === addressId
     );
     if (index === -1)
-      return res
-        .status(404)
-        .json({ success: false, message: "Address not found" });
+      return res.status(404).json({ success: false, message: "Address not found" });
 
-    // If setting default, clear all others first
+    // ✅ If setting default, clear all others first
     if (updatedAddress.isDefault) {
       user.addresses.forEach((a) => (a.isDefault = false));
     }
 
-    // Update fields
+    // ✅ Update fields
     user.addresses[index] = {
       ...user.addresses[index]._doc,
       ...updatedAddress,
     };
+
     await user.save();
 
     res.status(200).json({
       success: true,
       message: "Address updated successfully",
-      data: user.addresses,
+      address: user.addresses[index], // ✅ return only updated address
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 exports.deleteAddress = async (req, res) => {
   try {
@@ -410,18 +408,17 @@ exports.updateProfile = async (req, res) => {
 
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    // ✅ Update profile fields if provided
     if (firstname) user.firstname = firstname;
     if (lastname) user.lastname = lastname;
     if (mobileNumber) user.mobileNumber = mobileNumber;
 
-    // ✅ Handle address addition if provided
+    let newAddress = null;
+
     if (address) {
       if (user.addresses.length >= 5) {
         return res
@@ -429,12 +426,12 @@ exports.updateProfile = async (req, res) => {
           .json({ success: false, message: "Max 5 addresses allowed" });
       }
 
-      // If address.isDefault = true → unset other defaults
       if (address.isDefault) {
         user.addresses.forEach((addr) => (addr.isDefault = false));
       }
 
       user.addresses.push(address);
+      newAddress = user.addresses[user.addresses.length - 1]; // ✅ last one is new
     }
 
     await user.save();
@@ -442,13 +439,13 @@ exports.updateProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Profile and address updated successfully",
-      data: {
+      address: newAddress, // ✅ return only new address
+      user: {
         id: user._id,
         firstname: user.firstname,
         lastname: user.lastname,
         email: user.email,
         mobileNumber: user.mobileNumber,
-        addresses: user.addresses,
       },
     });
   } catch (err) {
