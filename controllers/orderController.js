@@ -22,7 +22,7 @@ exports.createOrder = async (req, res) => {
 
     const order = await Order.create({
       userId,
-      address, // 👈 store address snapshot
+      address,
       products,
       subtotal,
       shippingCost,
