@@ -94,29 +94,31 @@ exports.updateCartItem = async (req, res) => {
 
 exports.removeCartItem = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { id } = req.params; // cart item _id
+    const { productId } = req.body;
 
-    const updatedCart = await Cart.findOneAndUpdate(
-      { user: userId },
-      { $pull: { items: { _id: id } } }, // remove whole item (ring + diamond bundle)
-      { new: true }
+    const cart = await Cart.findOne({ userId: req.user.id });
+    if (!cart)
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
+
+    cart.items = cart.items.filter(
+      (item) => item.productId.toString() !== productId
     );
 
-    return res.json({
+    await cart.save();
+    res.status(200).json({
       success: true,
-      message: "Ring and Diamond removed from cart",
-      data: updatedCart,
+      message: "Item removed from cart",
+      data: cart,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 exports.deleteAllCarts = async (req, res) => {
   const { userId } = req.body;
-  console.log(userId, "id");
   try {
     const result = await Cart.deleteMany({ userId });
     if (result.deletedCount === 0) {
