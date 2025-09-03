@@ -3,27 +3,28 @@ const Cart = require("../models/Cart");
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { productId, quantity, size, variant } = req.body;
+    const { productId, quantity, size, variant, diamond } = req.body;
 
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
       cart = await Cart.create({
         userId,
-        items: [{ productId, quantity, size, variant }],
+        items: [{ productId, quantity, size, variant, diamond }],
       });
     } else {
       const index = cart.items.findIndex(
         (item) =>
-          item.productId.toString() === productId &&
+          item.productId?.toString() === productId &&
           item.size === size &&
-          item.variant === variant
+          item.variant === variant &&
+          JSON.stringify(item.diamond) === JSON.stringify(diamond) // compare diamonds
       );
 
       if (index > -1) {
         cart.items[index].quantity += quantity;
       } else {
-        cart.items.push({ productId, quantity, size, variant });
+        cart.items.push({ productId, quantity, size, variant, diamond });
       }
 
       await cart.save();
@@ -38,6 +39,7 @@ exports.addToCart = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 exports.getCart = async (req, res) => {
   try {
@@ -122,7 +124,7 @@ exports.removeCartItem = async (req, res) => {
 
 exports.deleteAllCarts = async (req, res) => {
   const { userId } = req.body;
-  console.log(userId, "id")
+  console.log(userId, "id");
   try {
     const result = await Cart.deleteMany({ userId });
     if (result.deletedCount === 0) {
@@ -135,7 +137,7 @@ exports.deleteAllCarts = async (req, res) => {
     res.status(200).json({
       status: true,
       message: `All Data Deleted successfully`,
-      deletedCount: result.deletedCount
+      deletedCount: result.deletedCount,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });

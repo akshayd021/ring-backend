@@ -17,6 +17,10 @@ const cartSchema = new mongoose.Schema(
         quantity: { type: Number, default: 1 },
         size: { type: String },
         variant: { type: String },
+        diamond: {
+          type: Object, // ✅ store the entire diamond object
+          default: null,
+        },
       },
     ],
   },
