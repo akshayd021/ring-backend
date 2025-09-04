@@ -71,7 +71,8 @@ exports.createOrder = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
   try {
-const orders = await Order.find().sort({ createdAt: -1 })
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
       .populate("userId")
       .populate({
         path: "products.product",
@@ -99,7 +100,7 @@ const orders = await Order.find().sort({ createdAt: -1 })
 
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
+    const order = await Order.findById(req.params.id).sort({ createdAt: -1 })
       .populate("userId")
       .populate({
         path: "products.product",
@@ -133,6 +134,7 @@ exports.getOrderById = async (req, res) => {
 exports.getOrdersByUser = async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 })
       .populate("userId")
       .populate({
         path: "products.product",
@@ -186,7 +188,7 @@ exports.updateOrderStatus = async (req, res) => {
 exports.getOrdersByStatus = async (req, res) => {
   try {
     const status = req.params.status;
-    const orders = await Order.find({ status })
+    const orders = await Order.find({ status }).sort({ createdAt: -1 })
       .populate("userId")
       .populate({
         path: "products.product",
