@@ -69,8 +69,8 @@ exports.getCart = async (req, res) => {
       }
 
       return {
-        // ...item._doc,
-        product: item.productId,
+        ...item._doc,
+        // product: item.productId,
         combinationString: updatedCombinationString,
       };
     });
