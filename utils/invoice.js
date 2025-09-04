@@ -29,12 +29,12 @@ exports.generateInvoice = async (order, filename) => {
     doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`);
     doc.moveDown();
 
-    // ✅ Customer Info (from order.address snapshot)
+    // ✅ Customer Info
     const { address, userId } = order;
     doc.font("Helvetica-Bold").text("Bill To:");
-    doc.font("Helvetica").text(`${address.firstName} ${address.lastName}`);
-    doc.text(`Mobile: ${address.mobile}`);
-    doc.text(`${address.street}`);
+    doc.font("Helvetica").text(`${address.firstName || ""} ${address.lastName || ""}`);
+    if (address.mobile) doc.text(`Mobile: ${address.mobile}`);
+    if (address.street) doc.text(`${address.street}`);
     doc.text(`${address.city}, ${address.state}`);
     doc.text(`${address.country} - ${address.pincode}`);
     if (userId?.email) {
@@ -49,20 +49,56 @@ exports.generateInvoice = async (order, filename) => {
     order.products.forEach((p, i) => {
       const product = p.product;
       const name = product?.name || "Unknown Product";
-      const line = `${i + 1}. ${name} | Qty: ${p.quantity} | Price: ₹${
-        p.price
-      } | Total: ₹${p.price * p.quantity}`;
-      doc.font("Helvetica").text(line);
+      const total = p.price * p.quantity;
+
+      // 🔹 Main product line
+      doc
+        .font("Helvetica-Bold")
+        .text(`${i + 1}. ${name}`)
+        .font("Helvetica")
+        .text(
+          `Qty: ${p.quantity} | Price: ₹${p.price.toFixed(2)} | Total: ₹${total.toFixed(2)}`
+        );
+
+      // 🔹 Show size & variant if available
+      if (p.size) doc.text(`Size: ${p.size}`);
+      if (p.variant) doc.text(`Variant: ${p.variant}`);
+
+      // 🔹 Diamond details if attached
+      if (p.diamond) {
+        const d = p.diamond;
+        doc.moveDown(0.5).font("Helvetica-Bold").text("Diamond Details:");
+        doc.font("Helvetica").fontSize(10);
+
+        doc.text(
+          `- ${d.Weight || "N/A"} Carat ${d.Shape || ""} | Color: ${d.Color || "N/A"} | Clarity: ${
+            d.Clarity || "N/A"
+          } | Cut: ${d["Cut Grade"] || "N/A"}`
+        );
+        doc.text(
+          `- Cert: ${d.Lab || "N/A"} (${d["Certificate #"] || "N/A"}) | Stock ID: ${
+            d["Stock #"] || "N/A"
+          }`
+        );
+        doc.text(
+          `- Polish: ${d.Polish || "N/A"} | Symmetry: ${d.Symmetry || "N/A"} | Fluorescence: ${
+            d["Fluorescence Intensity"] || "N/A"
+          }`
+        );
+        doc.text(`- Measurements: ${d.Measurements || "N/A"}`);
+        doc.moveDown(1);
+      }
+
+      doc.moveDown(1);
     });
 
-    doc.moveDown();
-
-    // ✅ Tax & Totals
+    // ✅ Totals
     const taxRate = 0.18; // 18% GST
     const tax = order.subtotal * taxRate;
     const net = order.subtotal + tax + order.shippingCost - order.discount;
 
     doc
+      .moveDown(1)
       .font("Helvetica-Bold")
       .text(`Subtotal: ₹${order.subtotal.toFixed(2)}`)
       .text(`Tax (18% GST): ₹${tax.toFixed(2)}`)

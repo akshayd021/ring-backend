@@ -22,6 +22,12 @@ const orderSchema = new mongoose.Schema(
         },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
+        size: { type: String },      // ✅ optional
+        variant: { type: String },   // ✅ optional
+        diamond: {
+          type: Object,              // ✅ full diamond object if selected
+          default: null,
+        },
       },
     ],
     subtotal: { type: Number, required: true },

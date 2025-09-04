@@ -10,8 +10,8 @@ exports.createOrder = async (req, res) => {
   try {
     const {
       userId,
-      address, // 👈 take only one selected address
-      products,
+      address,
+      products, // ✅ now includes diamond, size, variant
       subtotal,
       shippingCost,
       discount,
@@ -23,7 +23,14 @@ exports.createOrder = async (req, res) => {
     const order = await Order.create({
       userId,
       address,
-      products,
+      products: products.map((p) => ({
+        product: p.product,
+        quantity: p.quantity,
+        price: p.price,
+        size: p.size || null,
+        variant: p.variant || null,
+        diamond: p.diamond || null, // ✅ include diamond if exists
+      })),
       subtotal,
       shippingCost,
       discount,
@@ -55,7 +62,7 @@ exports.createOrder = async (req, res) => {
     res.status(201).json({
       status: true,
       message: "Order placed and invoice emailed successfully",
-      data: order,
+      data: populatedOrder,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
