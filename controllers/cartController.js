@@ -1,4 +1,5 @@
 const Cart = require("../models/Cart");
+const Variant = require("../models/Variant");
 
 exports.addToCart = async (req, res) => {
   try {
@@ -45,11 +46,28 @@ exports.getCart = async (req, res) => {
     const cart = await Cart.findOne({ userId: req.user.id }).populate(
       "items.productId"
     );
+    const variantDefs = await Variant.find({ status: "show" });
+    const valueIdToTextMap = {};
+    variantDefs.forEach((variantDef) => {
+      variantDef.variants.forEach((v) => {
+        valueIdToTextMap[v._id.toString()] = v.value;
+      });
+    });
+
+    const updatedCart = cart.variants.map((variant) => {
+      const ids = variant.combinationString.split(" / ");
+      const readableValues = ids.map((id) => valueIdToTextMap[id] || id);
+      const updatedCombinationString = readableValues.join(" / ");
+      return {
+        ...variant._doc,
+        combinationString: updatedCombinationString,
+      };
+    });
 
     res.status(200).json({
       success: true,
       message: "Cart fetched successfully",
-      data: cart || { items: [] },
+      data: updatedCart || { items: [] },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
