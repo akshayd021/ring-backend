@@ -71,7 +71,7 @@ exports.createOrder = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
+const orders = await Order.find().sort({ createdAt: -1 })
       .populate("userId")
       .populate({
         path: "products.product",
