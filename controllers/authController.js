@@ -307,13 +307,17 @@ exports.updateAddress = async (req, res) => {
 
     const user = await User.findById(req.user.id);
     if (!user)
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     const index = user.addresses.findIndex(
       (a) => a._id.toString() === addressId
     );
     if (index === -1)
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Address not found" });
 
     // ✅ If setting default, clear all others first
     if (updatedAddress.isDefault) {
@@ -337,7 +341,6 @@ exports.updateAddress = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 
 exports.deleteAddress = async (req, res) => {
   try {

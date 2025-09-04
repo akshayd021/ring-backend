@@ -21,7 +21,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "https://ring-frontend-xi.vercel.app",
-  "https://yourfrontenddomain.com",
+  "http://192.168.29.68:3000",
 ];
 app.use(
   cors({
