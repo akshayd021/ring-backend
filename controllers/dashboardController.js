@@ -21,6 +21,21 @@ exports.getDashboardStats = async (req, res) => {
 
     const dateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
 
+    // 🔹 Previous period (last month)
+    const prevStartDate = moment(startDate)
+      .subtract(1, "month")
+      .startOf("month")
+      .toDate();
+    const prevEndDate = moment(startDate)
+      .subtract(1, "month")
+      .endOf("month")
+      .toDate();
+    const prevDateFilter = {
+      createdAt: { $gte: prevStartDate, $lte: prevEndDate },
+    };
+
+    // =================== CURRENT PERIOD ===================
+
     // 1. Total Revenue
     const totalRevenueData = await Order.aggregate([
       { $match: { ...dateFilter, status: { $ne: "cancel" } } },
@@ -28,7 +43,75 @@ exports.getDashboardStats = async (req, res) => {
     ]);
     const totalRevenue = totalRevenueData[0]?.total || 0;
 
-    // 2. Sales by Category
+    // 2. Total Orders
+    const totalOrders = await Order.countDocuments({
+      ...dateFilter,
+      status: { $ne: "cancel" },
+    });
+
+    // 3. Total Customers
+    const totalCustomersData = await Order.aggregate([
+      { $match: { ...dateFilter, status: { $ne: "cancel" } } },
+      { $group: { _id: "$userId" } },
+      { $count: "uniqueCustomers" },
+    ]);
+    const totalCustomers = totalCustomersData[0]?.uniqueCustomers || 0;
+
+    // 4. Total Products Sold
+    const totalProductsData = await Order.aggregate([
+      { $match: { ...dateFilter, status: { $ne: "cancel" } } },
+      { $unwind: "$products" },
+      { $group: { _id: null, qty: { $sum: "$products.quantity" } } },
+    ]);
+    const totalProducts = totalProductsData[0]?.qty || 0;
+
+    // =================== PREVIOUS PERIOD ===================
+
+    // Revenue
+    const prevRevenueData = await Order.aggregate([
+      { $match: { ...prevDateFilter, status: { $ne: "cancel" } } },
+      { $group: { _id: null, total: { $sum: "$total" } } },
+    ]);
+    const prevRevenue = prevRevenueData[0]?.total || 0;
+
+    // Orders
+    const prevOrders = await Order.countDocuments({
+      ...prevDateFilter,
+      status: { $ne: "cancel" },
+    });
+
+    // Customers
+    const prevCustomersData = await Order.aggregate([
+      { $match: { ...prevDateFilter, status: { $ne: "cancel" } } },
+      { $group: { _id: "$userId" } },
+      { $count: "uniqueCustomers" },
+    ]);
+    const prevCustomers = prevCustomersData[0]?.uniqueCustomers || 0;
+
+    // Products
+    const prevProductsData = await Order.aggregate([
+      { $match: { ...prevDateFilter, status: { $ne: "cancel" } } },
+      { $unwind: "$products" },
+      { $group: { _id: null, qty: { $sum: "$products.quantity" } } },
+    ]);
+    const prevProducts = prevProductsData[0]?.qty || 0;
+
+    // =================== CALCULATE PERCENTAGE CHANGE ===================
+    const calcGrowth = (current, prev) => {
+      if (prev === 0 && current === 0) return 0;
+      if (prev === 0) return 100; // Avoid divide by 0
+      return (((current - prev) / prev) * 100).toFixed(2);
+    };
+
+    const growth = {
+      revenue: calcGrowth(totalRevenue, prevRevenue),
+      orders: calcGrowth(totalOrders, prevOrders),
+      customers: calcGrowth(totalCustomers, prevCustomers),
+      products: calcGrowth(totalProducts, prevProducts),
+    };
+
+    // =================== REST OF YOUR DASHBOARD DATA ===================
+
     const salesByCategory = await Order.aggregate([
       { $match: dateFilter },
       { $unwind: "$products" },
@@ -41,14 +124,9 @@ exports.getDashboardStats = async (req, res) => {
         },
       },
       { $unwind: "$productInfo" },
-
-      // Extract nested category._id to top level
       {
-        $addFields: {
-          categoryId: "$productInfo.category._id",
-        },
+        $addFields: { categoryId: "$productInfo.category._id" },
       },
-
       {
         $lookup: {
           from: "categories",
@@ -60,25 +138,17 @@ exports.getDashboardStats = async (req, res) => {
       { $unwind: "$categoryInfo" },
       {
         $group: {
-          _id: {
-            _id: "$categoryInfo._id",
-            name: "$categoryInfo.name",
-          },
+          _id: { _id: "$categoryInfo._id", name: "$categoryInfo.name" },
           totalSales: { $sum: "$products.quantity" },
           revenue: { $sum: "$products.price" },
         },
       },
       { $sort: { totalSales: -1 } },
     ]);
-    // 3. Overview
+
     const salesOverview = await Order.aggregate([
       { $match: dateFilter },
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-        },
-      },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
     ]);
     const overviewData = { pending: 0, processing: 0, delivered: 0, cancel: 0 };
     salesOverview.forEach((s) => (overviewData[s._id] = s.count));
@@ -87,7 +157,6 @@ exports.getDashboardStats = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5)
       .populate("userId", "email firstname lastname")
-
       .populate("products.product", "img name");
 
     const lowStockProducts = await Product.find({ stock: { $lte: 5 } })
@@ -97,7 +166,6 @@ exports.getDashboardStats = async (req, res) => {
     const categoryIds = lowStockProducts
       .map((p) => p.category?._id)
       .filter(Boolean);
-
     const categories = await Category.find({
       _id: { $in: categoryIds },
     }).select("name");
@@ -114,12 +182,14 @@ exports.getDashboardStats = async (req, res) => {
       categoryName: categoryMap[p.category?._id?.toString()] || "N/A",
     }));
 
+    // =================== RESPONSE ===================
     res.status(200).json({
       status: true,
       message: "Dashboard data fetched successfully",
       data: {
         filterRange: { from: startDate, to: endDate },
-        totalRevenue,
+        totals: { totalRevenue, totalOrders, totalCustomers, totalProducts },
+        growth, // 🚀 month-over-month % change
         salesByCategory,
         overview: overviewData,
         recentOrders,
