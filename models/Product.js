@@ -1,21 +1,18 @@
 const mongoose = require("mongoose");
 
-const VariantSchema = new mongoose.Schema(
-  {
-    combination: {
-      type: Object,
-      required: true,
-    },
-    combinationString: { type: String },
-    price: Number,
-    salePrice: Number,
-    sku: String,
-    barcode: String,
-    quantity: Number,
-    img: [{ type: String }],
+const VariantSchema = new mongoose.Schema({
+  combination: {
+    type: Object,
+    required: true,
   },
-  { _id: false }
-);
+  combinationString: { type: String },
+  price: Number,
+  salePrice: Number,
+  sku: String,
+  barcode: String,
+  quantity: Number,
+  img: [{ type: String }],
+});
 
 const productSchema = new mongoose.Schema(
   {
