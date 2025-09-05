@@ -41,43 +41,59 @@ exports.addToCart = async (req, res) => {
   }
 };
 
+// exports.getCart = async (req, res) => {
+//   try {
+//     const cart = await Cart.findOne({ userId: req.user.id }).populate(
+//       "items.productId"
+//     );
+//     const variantDefs = await Variant.find({ status: "show" });
+//     const valueIdToTextMap = {};
+//     variantDefs.forEach((variantDef) => {
+//       variantDef.variants.forEach((v) => {
+//         valueIdToTextMap[v._id.toString()] = v.value;
+//       });
+//     });
+
+//     const updatedCart = cart.items.map((item) => {
+//       // Find the product variant that matches this cart item (if product has variants)
+//       const productVariant = item.productId?.variants?.find(
+//         (v) => v._id === item.variant // compare with stored variant in cart
+//       );
+
+//       let updatedCombinationString = null;
+
+//       if (productVariant?.combinationString) {
+//         const ids = productVariant.combinationString.split(" / ");
+//         const readableValues = ids.map((id) => valueIdToTextMap[id] || id);
+//         updatedCombinationString = readableValues.join(" / ");
+//       }
+
+//       return {
+//         ...item._doc,
+//         // product: item.productId,
+//         combinationString: updatedCombinationString,
+//       };
+//     });
+//     res.status(200).json({
+//       success: true,
+//       message: "Cart fetched successfully",
+//       data: updatedCart || { items: [] },
+//     });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
 exports.getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.user.id }).populate(
       "items.productId"
     );
-    const variantDefs = await Variant.find({ status: "show" });
-    const valueIdToTextMap = {};
-    variantDefs.forEach((variantDef) => {
-      variantDef.variants.forEach((v) => {
-        valueIdToTextMap[v._id.toString()] = v.value;
-      });
-    });
 
-    const updatedCart = cart.items.map((item) => {
-      // Find the product variant that matches this cart item (if product has variants)
-      const productVariant = item.productId?.variants?.find(
-        (v) => v._id === item.variant // compare with stored variant in cart
-      );
-
-      let updatedCombinationString = null;
-
-      if (productVariant?.combinationString) {
-        const ids = productVariant.combinationString.split(" / ");
-        const readableValues = ids.map((id) => valueIdToTextMap[id] || id);
-        updatedCombinationString = readableValues.join(" / ");
-      }
-
-      return {
-        ...item._doc,
-        // product: item.productId,
-        combinationString: updatedCombinationString,
-      };
-    });
     res.status(200).json({
       success: true,
       message: "Cart fetched successfully",
-      data: updatedCart || { items: [] },
+      data: cart || { items: [] },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
