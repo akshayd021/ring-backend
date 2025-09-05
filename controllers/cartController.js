@@ -4,14 +4,14 @@ const Variant = require("../models/Variant");
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { productId, quantity, size, variant, diamond } = req.body;
+    const { productId, quantity, size, variant, diamond, variantId } = req.body;
 
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
       cart = await Cart.create({
         userId,
-        items: [{ productId, quantity, size, variant, diamond }],
+        items: [{ productId, quantity, size, variant, diamond, variantId }],
       });
     } else {
       const index = cart.items.findIndex(
@@ -19,13 +19,21 @@ exports.addToCart = async (req, res) => {
           item.productId?.toString() === productId &&
           item.size === size &&
           item.variant === variant &&
-          JSON.stringify(item.diamond) === JSON.stringify(diamond) // compare diamonds
+          item.variantId === variantId &&
+          JSON.stringify(item.diamond) === JSON.stringify(diamond)
       );
 
       if (index > -1) {
         cart.items[index].quantity += quantity;
       } else {
-        cart.items.push({ productId, quantity, size, variant, diamond });
+        cart.items.push({
+          productId,
+          quantity,
+          size,
+          variant,
+          diamond,
+          variantId,
+        }); // ✅ add variantId here too
       }
 
       await cart.save();
@@ -40,49 +48,6 @@ exports.addToCart = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
-// exports.getCart = async (req, res) => {
-//   try {
-//     const cart = await Cart.findOne({ userId: req.user.id }).populate(
-//       "items.productId"
-//     );
-//     const variantDefs = await Variant.find({ status: "show" });
-//     const valueIdToTextMap = {};
-//     variantDefs.forEach((variantDef) => {
-//       variantDef.variants.forEach((v) => {
-//         valueIdToTextMap[v._id.toString()] = v.value;
-//       });
-//     });
-
-//     const updatedCart = cart.items.map((item) => {
-//       // Find the product variant that matches this cart item (if product has variants)
-//       const productVariant = item.productId?.variants?.find(
-//         (v) => v._id === item.variant // compare with stored variant in cart
-//       );
-
-//       let updatedCombinationString = null;
-
-//       if (productVariant?.combinationString) {
-//         const ids = productVariant.combinationString.split(" / ");
-//         const readableValues = ids.map((id) => valueIdToTextMap[id] || id);
-//         updatedCombinationString = readableValues.join(" / ");
-//       }
-
-//       return {
-//         ...item._doc,
-//         // product: item.productId,
-//         combinationString: updatedCombinationString,
-//       };
-//     });
-//     res.status(200).json({
-//       success: true,
-//       message: "Cart fetched successfully",
-//       data: updatedCart || { items: [] },
-//     });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
 
 exports.getCart = async (req, res) => {
   try {
@@ -102,7 +67,7 @@ exports.getCart = async (req, res) => {
 
 exports.updateCartItem = async (req, res) => {
   try {
-    const { productId, quantity, size, variant } = req.body;
+    const { productId, quantity, size, variant, variantId } = req.body;
 
     const cart = await Cart.findOne({ userId: req.user.id });
     if (!cart)
@@ -114,7 +79,8 @@ exports.updateCartItem = async (req, res) => {
       (item) =>
         item.productId.toString() === productId &&
         item.size === size &&
-        item.variant === variant
+        item.variant === variant &&
+        item.variantId === variantId
     );
 
     if (index === -1) {
@@ -138,19 +104,20 @@ exports.updateCartItem = async (req, res) => {
 
 exports.removeCartItem = async (req, res) => {
   try {
-    const { productId } = req.body;
+    const { itemId } = req.body; // 👈 pass the cart item _id from frontend
 
     const cart = await Cart.findOne({ userId: req.user.id });
-    if (!cart)
-      return res
-        .status(404)
-        .json({ success: false, message: "Cart not found" });
+    if (!cart) {
+      return res.status(404).json({ success: false, message: "Cart not found" });
+    }
 
+    // filter out the item
     cart.items = cart.items.filter(
-      (item) => item.productId.toString() !== productId
+      (item) => item._id.toString() !== itemId
     );
 
     await cart.save();
+
     res.status(200).json({
       success: true,
       message: "Item removed from cart",
@@ -160,6 +127,7 @@ exports.removeCartItem = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 exports.deleteAllCarts = async (req, res) => {
   const { userId } = req.body;
