@@ -108,13 +108,13 @@ exports.removeCartItem = async (req, res) => {
 
     const cart = await Cart.findOne({ userId: req.user.id });
     if (!cart) {
-      return res.status(404).json({ success: false, message: "Cart not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
     }
 
     // filter out the item
-    cart.items = cart.items.filter(
-      (item) => item._id.toString() !== itemId
-    );
+    cart.items = cart.items.filter((item) => item._id.toString() !== itemId);
 
     await cart.save();
 
@@ -127,7 +127,6 @@ exports.removeCartItem = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 
 exports.deleteAllCarts = async (req, res) => {
   const { userId } = req.body;
