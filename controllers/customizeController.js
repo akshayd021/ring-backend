@@ -39,7 +39,13 @@ exports.setTopSellers = async (req, res) => {
 
 exports.getTopSellers = async (req, res) => {
   try {
-    const customize = await Customize.find().populate("product");
+    const customize = await Customize.find().populate({
+      path: "product",
+      populate: [
+        { path: "category._id", model: "Category" },
+        { path: "category.subcategories", model: "Subcategory" },
+      ],
+    });
 
     if (!customize) {
       return res
