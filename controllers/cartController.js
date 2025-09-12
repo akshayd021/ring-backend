@@ -51,9 +51,19 @@ exports.addToCart = async (req, res) => {
 
 exports.getCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ userId: req.user.id }).populate(
-      "items.productId"
-    );
+    const cart = await Cart.findOne({ userId: req.user.id }).populate({
+      path: "items.productId",
+      populate: [
+        {
+          path: "category._id",
+          model: "Category",
+        },
+        {
+          path: "category.subcategories",
+          model: "Subcategory",
+        },
+      ],
+    });
 
     res.status(200).json({
       success: true,
