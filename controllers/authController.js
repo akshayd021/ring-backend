@@ -324,7 +324,7 @@ exports.updateAddress = async (req, res) => {
       user.addresses.forEach((a) => (a.isDefault = false));
     }
 
-    // ✅ Update fields
+    // ✅ Update address fields, including mobileNumber
     user.addresses[index] = {
       ...user.addresses[index]._doc,
       ...updatedAddress,
@@ -335,7 +335,7 @@ exports.updateAddress = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Address updated successfully",
-      address: user.addresses[index], // ✅ return only updated address
+      address: user.addresses[index],
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -418,7 +418,7 @@ exports.updateProfile = async (req, res) => {
 
     if (firstname) user.firstname = firstname;
     if (lastname) user.lastname = lastname;
-    if (mobileNumber) user.mobileNumber = mobileNumber;
+    if (mobileNumber) user.mobileNumber = mobileNumber; // main profile mobile
 
     let newAddress = null;
 
@@ -433,8 +433,15 @@ exports.updateProfile = async (req, res) => {
         user.addresses.forEach((addr) => (addr.isDefault = false));
       }
 
+      // ✅ ensure mobileNumber is provided for address
+      if (!address.mobileNumber) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Address mobile number required" });
+      }
+
       user.addresses.push(address);
-      newAddress = user.addresses[user.addresses.length - 1]; // ✅ last one is new
+      newAddress = user.addresses[user.addresses.length - 1];
     }
 
     await user.save();
@@ -442,7 +449,7 @@ exports.updateProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Profile and address updated successfully",
-      address: newAddress, // ✅ return only new address
+      address: newAddress,
       user: {
         id: user._id,
         firstname: user.firstname,
