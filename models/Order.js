@@ -22,6 +22,11 @@ const orderSchema = new mongoose.Schema(
     total: Number,
     paymentMethod: { type: String, enum: ["cod", "card"], default: "cod" },
     cardInfo: { type: Object },
+    status: {
+      type: String,
+      enum: ["pending", "processing", "delivered", "cancel", "returned"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );
