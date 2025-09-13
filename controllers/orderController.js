@@ -49,7 +49,6 @@ exports.createOrder = async (req, res) => {
         quantity: p.quantity,
         price: p.price,
         size: p.size || null,
-        variant: p.variant || null,
         diamond: p.diamond || null,
       });
     }
@@ -134,7 +133,6 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
-
 exports.getOrderById = async (req, res) => {
   try {
     let order = await Order.findById(req.params.id)
@@ -173,7 +171,6 @@ exports.getOrderById = async (req, res) => {
     res.status(500).json({ status: false, message: err.message });
   }
 };
-
 
 exports.getOrdersByUser = async (req, res) => {
   try {

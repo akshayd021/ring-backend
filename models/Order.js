@@ -20,12 +20,11 @@ const orderSchema = new mongoose.Schema(
         },
         variantId: {
           type: mongoose.Schema.Types.ObjectId, // ✅ reference to specific variant
-          required: false,
+          required: true,
         },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
         size: { type: String },
-        variant: { type: String },
         diamond: {
           type: Object,
           default: null,
