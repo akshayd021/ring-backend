@@ -11,7 +11,7 @@ exports.createOrder = async (req, res) => {
     const {
       userId,
       address,
-      products, // ✅ now includes diamond, size, variant
+      products,
       subtotal,
       shippingCost,
       discount,
@@ -20,17 +20,44 @@ exports.createOrder = async (req, res) => {
       cardInfo,
     } = req.body;
 
-    const order = await Order.create({
-      userId,
-      address,
-      products: products.map((p) => ({
+    const orderProducts = [];
+
+    for (let p of products) {
+      const productDoc = await Product.findById(p.product);
+
+      if (!productDoc) {
+        return res
+          .status(404)
+          .json({ status: false, message: `Product not found: ${p.product}` });
+      }
+
+      let selectedVariant = null;
+
+      if (p.variantId) {
+        selectedVariant = productDoc.variants.id(p.variantId); // ✅ find by _id inside variants array
+        if (!selectedVariant) {
+          return res.status(400).json({
+            status: false,
+            message: `Variant not found for product ${productDoc.name}`,
+          });
+        }
+      }
+
+      orderProducts.push({
         product: p.product,
+        variantId: p.variantId || null, // ✅ store variantId
         quantity: p.quantity,
         price: p.price,
         size: p.size || null,
         variant: p.variant || null,
-        diamond: p.diamond || null, // ✅ include diamond if exists
-      })),
+        diamond: p.diamond || null,
+      });
+    }
+
+    const order = await Order.create({
+      userId,
+      address,
+      products: orderProducts,
       subtotal,
       shippingCost,
       discount,
@@ -71,22 +98,31 @@ exports.createOrder = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
+    let orders = await Order.find()
       .sort({ createdAt: -1 })
       .populate("userId")
       .populate({
         path: "products.product",
         populate: [
-          {
-            path: "category._id",
-            model: "Category",
-          },
-          {
-            path: "category.subcategories",
-            model: "Subcategory",
-          },
+          { path: "category._id", model: "Category" },
+          { path: "category.subcategories", model: "Subcategory" },
         ],
       });
+
+    // ✅ Attach variant details manually
+    orders = orders.map((order) => {
+      order = order.toObject();
+      order.products = order.products.map((p) => {
+        if (p.variantId && p.product?.variants) {
+          const variant = p.product.variants.find(
+            (v) => v._id.toString() === p.variantId.toString()
+          );
+          return { ...p, variantDetails: variant || null };
+        }
+        return { ...p, variantDetails: null };
+      });
+      return order;
+    });
 
     res.status(200).json({
       status: true,
@@ -98,22 +134,16 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
+
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .sort({ createdAt: -1 })
+    let order = await Order.findById(req.params.id)
       .populate("userId")
       .populate({
         path: "products.product",
         populate: [
-          {
-            path: "category._id",
-            model: "Category",
-          },
-          {
-            path: "category.subcategories",
-            model: "Subcategory",
-          },
+          { path: "category._id", model: "Category" },
+          { path: "category.subcategories", model: "Subcategory" },
         ],
       });
 
@@ -121,6 +151,18 @@ exports.getOrderById = async (req, res) => {
       return res
         .status(404)
         .json({ status: false, message: "Order not found" });
+
+    // ✅ Attach variant details manually
+    order = order.toObject();
+    order.products = order.products.map((p) => {
+      if (p.variantId && p.product?.variants) {
+        const variant = p.product.variants.find(
+          (v) => v._id.toString() === p.variantId.toString()
+        );
+        return { ...p, variantDetails: variant || null };
+      }
+      return { ...p, variantDetails: null };
+    });
 
     res.status(200).json({
       status: true,
@@ -132,24 +174,34 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
+
 exports.getOrdersByUser = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.params.userId })
+    let orders = await Order.find({ userId: req.params.userId })
       .sort({ createdAt: -1 })
       .populate("userId")
       .populate({
         path: "products.product",
         populate: [
-          {
-            path: "category._id",
-            model: "Category",
-          },
-          {
-            path: "category.subcategories",
-            model: "Subcategory",
-          },
+          { path: "category._id", model: "Category" },
+          { path: "category.subcategories", model: "Subcategory" },
         ],
       });
+
+    // ✅ Attach variant details manually
+    orders = orders.map((order) => {
+      order = order.toObject();
+      order.products = order.products.map((p) => {
+        if (p.variantId && p.product?.variants) {
+          const variant = p.product.variants.find(
+            (v) => v._id.toString() === p.variantId.toString()
+          );
+          return { ...p, variantDetails: variant || null };
+        }
+        return { ...p, variantDetails: null };
+      });
+      return order;
+    });
 
     res.status(200).json({
       status: true,

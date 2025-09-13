@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-
 const orderSchema = new mongoose.Schema(
   {
     userId: {
@@ -20,12 +18,16 @@ const orderSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
         },
+        variantId: {
+          type: mongoose.Schema.Types.ObjectId, // ✅ reference to specific variant
+          required: false,
+        },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
-        size: { type: String },      // ✅ optional
-        variant: { type: String },   // ✅ optional
+        size: { type: String },
+        variant: { type: String },
         diamond: {
-          type: Object,              // ✅ full diamond object if selected
+          type: Object,
           default: null,
         },
       },
