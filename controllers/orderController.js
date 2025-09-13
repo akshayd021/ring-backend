@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const { generateInvoice } = require("../utils/invoice");
 const sendEmail = require("../utils/sendEmail");
-const Subcategory = require("../models/Subcategory");
 const Product = require("../models/Product");
 
 exports.createOrder = async (req, res) => {
@@ -34,7 +33,7 @@ exports.createOrder = async (req, res) => {
       let selectedVariant = null;
 
       if (p.variantId) {
-        selectedVariant = productDoc.variants.id(p.variantId); // ✅ find by _id inside variants array
+        selectedVariant = productDoc.variants.id(p.variantId);
         if (!selectedVariant) {
           return res.status(400).json({
             status: false,
@@ -45,7 +44,7 @@ exports.createOrder = async (req, res) => {
 
       orderProducts.push({
         product: p.product,
-        variantId: p.variantId || null, // ✅ store variantId
+        variantId: p.variantId || null,
         quantity: p.quantity,
         price: p.price,
         size: p.size || null,
@@ -108,17 +107,21 @@ exports.getAllOrders = async (req, res) => {
         ],
       });
 
-    // ✅ Attach variant details manually
     orders = orders.map((order) => {
       order = order.toObject();
       order.products = order.products.map((p) => {
-        if (p.variantId && p.product?.variants) {
-          const variant = p.product.variants.find(
-            (v) => v._id.toString() === p.variantId.toString()
-          );
-          return { ...p, variantDetails: variant || null };
-        }
-        return { ...p, variantDetails: null };
+        const variant =
+          p.variantId && p.product?.variants
+            ? p.product.variants.find(
+                (v) => v._id.toString() === p.variantId.toString()
+              )
+            : null;
+
+        return {
+          ...p,
+          variantId: p.variantId, // ✅ keep variantId
+          variantDetails: variant || null,
+        };
       });
       return order;
     });
@@ -150,16 +153,20 @@ exports.getOrderById = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Order not found" });
 
-    // ✅ Attach variant details manually
     order = order.toObject();
     order.products = order.products.map((p) => {
-      if (p.variantId && p.product?.variants) {
-        const variant = p.product.variants.find(
-          (v) => v._id.toString() === p.variantId.toString()
-        );
-        return { ...p, variantDetails: variant || null };
-      }
-      return { ...p, variantDetails: null };
+      const variant =
+        p.variantId && p.product?.variants
+          ? p.product.variants.find(
+              (v) => v._id.toString() === p.variantId.toString()
+            )
+          : null;
+
+      return {
+        ...p,
+        variantId: p.variantId,
+        variantDetails: variant || null,
+      };
     });
 
     res.status(200).json({
@@ -185,17 +192,21 @@ exports.getOrdersByUser = async (req, res) => {
         ],
       });
 
-    // ✅ Attach variant details manually
     orders = orders.map((order) => {
       order = order.toObject();
       order.products = order.products.map((p) => {
-        if (p.variantId && p.product?.variants) {
-          const variant = p.product.variants.find(
-            (v) => v._id.toString() === p.variantId.toString()
-          );
-          return { ...p, variantDetails: variant || null };
-        }
-        return { ...p, variantDetails: null };
+        const variant =
+          p.variantId && p.product?.variants
+            ? p.product.variants.find(
+                (v) => v._id.toString() === p.variantId.toString()
+              )
+            : null;
+
+        return {
+          ...p,
+          variantId: p.variantId,
+          variantDetails: variant || null,
+        };
       });
       return order;
     });
@@ -244,14 +255,8 @@ exports.getOrdersByStatus = async (req, res) => {
       .populate({
         path: "products.product",
         populate: [
-          {
-            path: "category._id",
-            model: "Category",
-          },
-          {
-            path: "category.subcategories",
-            model: "Subcategory",
-          },
+          { path: "category._id", model: "Category" },
+          { path: "category.subcategories", model: "Subcategory" },
         ],
       });
 
